@@ -914,7 +914,7 @@
                     if (e.startsWith('http'))
                         return e;
                     let a = e.split('/').pop() || e;
-                    // a.includes('.') || (a += 'background' === t ? '.jpg' : '.png'),
+                    a.includes('.') || (a += 'background' === t ? '.jpg' : '.png'),
                     return 'https://qianyedoufu.dpdns.org/' + a
                 }
                 preloadDialogueImages() {
