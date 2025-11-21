@@ -1,0 +1,3516 @@
+<head>
+    <style>
+        body {
+            background: #000000bf!important;
+            color: #f5f5f7!important
+        }
+    </style>
+<script type="module">
+    var e = {
+        387: (e, t, a) => {
+            a.d(t, {
+                forceUpdate: () => S,
+                getAppInstances: () => k,
+                onLoad: () => C,
+                onUnload: () => w,
+                saveGameState: () => x
+            }),
+            a.r(t);
+            const i = toastr;
+            var o = a.n(i);
+            class l {
+                currentAnimation = null;
+                isAnimating = !1;
+                currentText = '';
+                targetElement = null;
+                animationSpeed = 50;
+                animationType = 'typewriter';
+                constructor() {
+                    this.loadSettings()
+                }
+                loadSettings(){
+                    const e = localStorage.getItem('textAnimationSpeed')
+                      , t = localStorage.getItem('textAnimationType')
+                      , a = localStorage.getItem('dialogueFontSize')
+                      , n = localStorage.getItem('selectedFont'); // 新增：读取字体设置
+                    e && (this.animationSpeed = parseInt(e, 10)),
+                    t && ['typewriter', 'fade', 'instant'].includes(t) && (this.animationType = t),
+                    a && this.applyFontSize(parseInt(a, 10)),
+                    n && this.applyFontFamily(n) // 新增：应用字体
+                }
+                saveSettings() {
+                    localStorage.setItem('textAnimationSpeed', this.animationSpeed.toString()),
+                    localStorage.setItem('textAnimationType', this.animationType),
+                    localStorage.setItem('selectedFont', this.getCurrentFont()) // 新增：保存字体
+                }
+                applyFontFamily(e) {
+                    $('body').css('font-family', e);
+                    // 同时应用到对话框内容，确保立即生效
+                    $('#dialogue-content').css('font-family', e);
+                }
+    
+                // 新增：设置字体
+                setFontFamily(e) {
+                    this.applyFontFamily(e);
+                    localStorage.setItem('selectedFont', e);
+                }
+                // 新增：获取当前字体
+                getCurrentFont() {
+                    return localStorage.getItem('selectedFont') || "'Noto Sans SC', sans-serif";
+                }   
+                setAnimationSpeed(e) {
+                    this.animationSpeed = Math.max(5, Math.min(500, e)),
+                    localStorage.setItem('textAnimationSpeed', this.animationSpeed.toString())
+                }
+                setAnimationType(e) {
+                    this.animationType = e,
+                    localStorage.setItem('textAnimationType', e)
+                }
+                setFontSize(e) {
+                    localStorage.setItem('dialogueFontSize', e.toString()),
+                    this.applyFontSize(e)
+                }
+                applyFontSize(e) {
+                    const t = Math.max(12, Math.min(32, e));
+                    $('#dialogue-content').css('font-size', `${t}px`)
+                }
+                async displayText(e, t, a) {
+                    this.stopCurrentAnimation(),
+                    this.currentText = e,
+                    this.targetElement = t,
+                    this.isAnimating = !0;
+                    try {
+                        switch (this.animationType) {
+                        case 'typewriter':
+                            await this.typewriterEffect(e, t);
+                            break;
+                        case 'fade':
+                            await this.fadeInEffect(e, t);
+                            break;
+                        default:
+                            this.instantDisplay(e, t)
+                        }
+                    } catch (e) {} finally {
+                        this.isAnimating = !1,
+                        a && a()
+                    }
+                }
+                async typewriterEffect(e, t) {
+                    return t.empty(),
+                    new Promise( (a, n) => {
+                        let s = 0;
+                        const i = Array.from(e);
+                        let o = 0;
+                        Date.now();
+                        const r = Math.max(.35, Math.min(2, this.animationSpeed / 50))
+                          , c = Math.min(1, this.animationSpeed / 120)
+                          , l = () => {
+                            if (!this.isAnimating)
+                                return void n(new Error('Animation stopped'));
+                            if (s >= i.length)
+                                return void a();
+                            const e = i[s];
+                            t.append(e),
+                            s++;
+                            let d = this.animationSpeed;
+                            Date.now();
+                            if ('。' === e || '！' === e || '？' === e || '…' === e)
+                                d *= (1.8 + Math.random() * (.8 * c)) * r,
+                                o = 0;
+                            else if ('，' === e || '、' === e || '；' === e || '：' === e)
+                                d *= (1.3 + Math.random() * (.6 * c)) * r,
+                                o = 0;
+                            else if (' ' === e)
+                                d *= (.8 + Math.random() * (.2 * c)) * Math.max(.5, r);
+                            else {
+                                const e = Math.random();
+                                e < .08 && 0 === o ? (o = 2 + Math.floor(2 * Math.random()),
+                                d *= .6) : o > 0 ? (d *= .45 + .25 * Math.random(),
+                                o--) : d *= e < .2 ? (1.8 + Math.random() * (.8 * c)) * r : e < .4 ? .85 + .25 * Math.random() : (.9 + Math.random() * (.3 * c)) * r
+                            }
+                            this.currentAnimation = window.setTimeout(l, Math.max(d, 12))
+                        }
+                        ;
+                        l()
+                    }
+                    )
+                }
+                async fadeInEffect(e, t) {
+                    return t.empty(),
+                    new Promise( (a, n) => {
+                        let s = 0;
+                        const i = Array.from(e)
+                          , o = () => {
+                            if (!this.isAnimating)
+                                return void n(new Error('Animation stopped'));
+                            if (s >= i.length)
+                                return void a();
+                            const e = i[s];
+                            t.append(e),
+                            s++;
+                            const r = Math.max(1 * this.animationSpeed, 20);
+                            this.currentAnimation = window.setTimeout(o, r)
+                        }
+                        ;
+                        o()
+                    }
+                    )
+                }
+                instantDisplay(e, t) {
+                    t.text(e).css('opacity', '1')
+                }
+                stopCurrentAnimation() {
+                    this.isAnimating = !1,
+                    this.currentAnimation && (clearTimeout(this.currentAnimation),
+                    this.currentAnimation = null),
+                    this.targetElement && this.currentText && this.targetElement.stop(!0, !0).text(this.currentText).css('opacity', '1')
+                }
+                skipAnimation() {
+                    this.isAnimating && this.targetElement && this.currentText && this.stopCurrentAnimation()
+                }
+                isPlaying() {
+                    return this.isAnimating
+                }
+                getSettings() {
+                    const e = parseInt(localStorage.getItem('dialogueFontSize') || '16', 10);
+                    return {
+                        speed: this.animationSpeed,
+                        type: this.animationType,
+                        fontSize: e,
+                        fontFamily: this.getCurrentFont() // 新增：返回字体设置
+                    }
+                }
+            }
+            class d {
+                uiController;
+                dataManager;
+                stage = [];
+                MAX_CHARACTERS = 3;
+                characterIdCounter = 0;
+                imageCache = new Map;
+                MAX_CACHE_SIZE = 20;
+                animatingCharacters = new Set;
+                currentSpeaker = null;
+                constructor(e, t) {
+                    this.uiController = e,
+                    this.dataManager = t
+                }
+                normalizeCharacterName(e) {
+                    return e.replace(/-/g, '').trim()
+                }
+                async speakCharacter(e, t) {
+                    console.log('🎭 角色说话:', {
+                        name: e,
+                        spriteUrl: t
+                    });
+                    const a = this.normalizeCharacterName(e);
+                    if (this.animatingCharacters.has(a))
+                        return void console.log('⏭️ 角色正在动画中，跳过:', e);
+                    await this.preloadImage(t);
+                    const n = this.stage.findIndex(e => this.normalizeCharacterName(e.name) === a);
+                    if (n >= 0) {
+                        const a = this.stage[n];
+                        console.log('🔄 更新现有角色立绘:', e),
+                        await this.updateCharacterSprite(a, t),
+                        this.highlightSpeakingCharacter(a)
+                    } else
+                        console.log('👋 新角色入场:', e),
+                        await this.addCharacter(e, t);
+                    await this.relayoutCharacters()
+                }
+                async preloadImage(e) {
+                    if (this.imageCache.has(e))
+                        return console.log('📷 使用缓存图片:', e),
+                        this.imageCache.get(e);
+                    if (this.imageCache.size >= this.MAX_CACHE_SIZE) {
+                        const e = this.imageCache.keys().next().value;
+                        e && (this.imageCache.delete(e),
+                        console.log('🧹 清理旧图片缓存:', e))
+                    }
+                    return new Promise(t => {
+                        const a = new Image;
+                        a.onload = () => {
+                            console.log('✅ 图片预加载成功:', e),
+                            this.imageCache.set(e, a),
+                            t(a)
+                        }
+                        ,
+                        a.onerror = () => {
+                            console.error('❌ 图片加载失败:', e);
+                            const a = new Image;
+                            a.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=',
+                            this.imageCache.set(e, a),
+                            t(a)
+                        }
+                        ,
+                        a.src = e,
+                        setTimeout( () => {
+                            a.complete || a.onerror?.(new Event('timeout'))
+                        }
+                        , 5e3)
+                    }
+                    )
+                }
+                async addCharacter(e, t) {
+                    const a = this.normalizeCharacterName(e);
+                    this.animatingCharacters.add(a);
+                    try {
+                        if (this.stage.length >= this.MAX_CHARACTERS) {
+                            const e = this.stage.shift();
+                            console.log('🚪 移除最早角色:', e.name),
+                            await this.removeCharacterFromDOM(e)
+                        }
+                        const a = {
+                            name: e,
+                            spriteUrl: t,
+                            elementId: 'character-stage-' + ++this.characterIdCounter,
+                            entryTime: Date.now()
+                        };
+                        this.stage.push(a),
+                        await this.createCharacterElement(a),
+                        await this.playEntryAnimation(a),
+                        this.highlightSpeakingCharacter(a),
+                        console.log('✅ 角色已入场，当前舞台:', this.stage.map(e => e.name))
+                    } finally {
+                        this.animatingCharacters.delete(a)
+                    }
+                }
+                async updateCharacterSprite(e, t) {
+                    if (e.spriteUrl !== t) {
+                        this.animatingCharacters.add(e.name);
+                        try {
+                            e.spriteUrl = t;
+                            const a = $(`#${e.elementId}`);
+                            a.length > 0 && (a.addClass('sprite-changing'),
+                            await this.sleep(100),
+                            a.attr('src', t),
+                            await this.sleep(50),
+                            a.removeClass('sprite-changing'),
+                            console.log('🔄 立绘切换完成:', e.name))
+                        } finally {
+                            this.animatingCharacters.delete(e.name)
+                        }
+                    }
+                }
+                async relayoutCharacters() {
+                    const e = this.stage.length;
+                    console.log('🎯 重新布局角色，数量:', e);
+                    const t = [];
+                    for (let a = 0; a < this.stage.length; a++) {
+                        const n = this.stage[a]
+                          , s = $(`#${n.elementId}`);
+                        if (0 === s.length)
+                            continue;
+                        let i;
+                        i = 1 === e ? 'center' : 2 === e ? 0 === a ? 'left' : 'right' : ['three-left', 'three-center', 'three-right'][a],
+                        t.push(this.moveToPosition(s, i))
+                    }
+                    await Promise.all(t)
+                }
+                async createCharacterElement(e) {
+                    const t = $('.character-container');
+                    if (0 === t.length)
+                        return void console.error('❌ character-container 容器不存在！');
+                    console.log('🏗️ 创建角色元素:', e.name, '图片:', e.spriteUrl);
+                    const a = $(`\n      <img id="${e.elementId}"\n           class="character-sprite dynamic"\n           src="${e.spriteUrl}"\n           alt="${e.name}"\n           style="opacity: 0;" />\n    `);
+                    a.addClass('entering'),
+                    a.on('load', () => {
+                        console.log('✅ 角色图片加载成功:', e.spriteUrl)
+                    }
+                    ).on('error', () => {
+                        console.error('❌ 角色图片加载失败:', e.spriteUrl)
+                    }
+                    );
+                    const n = t.find('.character-status-tooltip');
+                    n.length > 0 ? a.insertBefore(n) : t.append(a),
+                    console.log('📦 角色元素已添加到DOM:', e.elementId)
+                }
+                async playEntryAnimation(e) {
+                    const t = $(`#${e.elementId}`);
+                    0 !== t.length ? (console.log('🎬 开始入场动画:', e.name),
+                    t.addClass('entering'),
+                    await this.sleep(300),
+                    t.removeClass('entering'),
+                    t.css('opacity', '1'),
+                    console.log('✨ 入场动画完成:', e.name)) : console.error('❌ 角色元素不存在:', e.elementId)
+                }
+                async moveToPosition(e, t) {
+                    e.removeClass('pos-left pos-center pos-right pos-three-left pos-three-center pos-three-right').addClass(`pos-${t}`),
+                    await this.sleep(400)
+                }
+                async removeCharacterFromDOM(e) {
+                    const t = $(`#${e.elementId}`);
+                    t.length > 0 && (t.addClass('exiting'),
+                    await this.sleep(200),
+                    t.remove())
+                }
+                getStageInfo() {
+                    return {
+                        count: this.stage.length,
+                        characters: this.stage.map(e => e.name)
+                    }
+                }
+                highlightSpeakingCharacter(e) {
+                    this.currentSpeaker !== e.name ? (this.currentSpeaker = e.name,
+                    $('.character-sprite.dynamic').removeClass('dimmed'),
+                    $('.character-sprite.dynamic').each( (t, a) => {
+                        const n = $(a);
+                        n.attr('id') !== e.elementId && n.addClass('dimmed')
+                    }
+                    ),
+                    console.log('🗣️ 角色开始说话:', e.name)) : console.log('🗣️ 角色继续说话:', e.name)
+                }
+                clearSpeakerHighlight() {
+                    this.currentSpeaker = null,
+                    $('.character-sprite.dynamic').removeClass('dimmed'),
+                    console.log('🗨️ 已清除所有角色暗化效果')
+                }
+                async clearStage() {
+                    if (0 !== this.stage.length) {
+                        console.log('🧹 清空舞台，当前角色:', this.stage.map(e => e.name));
+                        for (const e of this.stage)
+                            await this.removeCharacterFromDOM(e);
+                        this.stage = [],
+                        this.characterIdCounter = 0,
+                        this.animatingCharacters.clear(),
+                        console.log('✅ 舞台已清空')
+                    } else
+                        console.log('🧹 舞台已为空，无需清理')
+                }
+                executeCharacterAction(e, t) {
+                    console.log('🎭 在舞台上查找角色进行动作:', {
+                        targetCharacterName: e,
+                        actionType: t
+                    });
+                    const a = this.normalizeCharacterName(e)
+                      , n = this.stage.find(e => this.normalizeCharacterName(e.name) === a);
+                    if (!n)
+                        return void console.warn('⚠️ 目标角色不在舞台上，无法执行动作:', e);
+                    const s = $(`#${n.elementId}`);
+                    if (s.length)
+                        if (console.log(`🎭 执行${e}的${t}动作`),
+                        this.animatingCharacters.has(n.elementId))
+                            console.log('⏳ 角色正在执行其他动画，跳过本次动作');
+                        else {
+                            this.animatingCharacters.add(n.elementId);
+                            try {
+                                switch (t) {
+                                case 'shake':
+                                    this.executeShakeAction(s, n.elementId);
+                                    break;
+                                case 'jump_up':
+                                    this.executeJumpUpAction(s, n.elementId);
+                                    break;
+                                case 'jump_down':
+                                    this.executeJumpDownAction(s, n.elementId);
+                                    break;
+                                default:
+                                    console.warn('⚠️ 未知的动作类型:', t),
+                                    this.animatingCharacters.delete(n.elementId)
+                                }
+                            } catch (e) {
+                                console.error('❌ 执行角色动作时出错:', e),
+                                this.animatingCharacters.delete(n.elementId)
+                            }
+                        }
+                    else
+                        console.warn('⚠️ 角色元素不存在:', n.elementId)
+                }
+                executeShakeAction(e, t) {
+                    console.log('🫨 执行摇晃动作'),
+                    e.addClass('character-shake'),
+                    setTimeout( () => {
+                        e.removeClass('character-shake'),
+                        this.animatingCharacters.delete(t),
+                        console.log('🫨 摇晃动作完成')
+                    }
+                    , 600)
+                }
+                executeJumpUpAction(e, t) {
+                    console.log('⬆️ 执行向上跳跃动作');
+                    const a = this.getAndRemoveBreathingClasses(e);
+                    e.addClass('character-jump-up'),
+                    setTimeout( () => {
+                        e.removeClass('character-jump-up'),
+                        this.restoreBreathingClasses(e, a),
+                        this.animatingCharacters.delete(t),
+                        console.log('⬆️ 向上跳跃动作完成')
+                    }
+                    , 400)
+                }
+                executeJumpDownAction(e, t) {
+                    console.log('⬇️ 执行向下跳跃动作');
+                    const a = this.getAndRemoveBreathingClasses(e);
+                    e.addClass('character-jump-down'),
+                    setTimeout( () => {
+                        e.removeClass('character-jump-down'),
+                        this.restoreBreathingClasses(e, a),
+                        this.animatingCharacters.delete(t),
+                        console.log('⬇️ 向下跳跃动作完成')
+                    }
+                    , 400)
+                }
+                cleanup() {
+                    console.log('🧹 清理立绘系统资源'),
+                    this.imageCache.clear(),
+                    this.animatingCharacters.clear(),
+                    $('.character-sprite.dynamic').removeClass('dimmed'),
+                    this.currentSpeaker = null,
+                    this.stage = [],
+                    this.characterIdCounter = 0,
+                    $('.character-sprite.dynamic').remove(),
+                    console.log('✅ 立绘系统资源已清理')
+                }
+                sleep(e) {
+                    return new Promise(t => setTimeout(t, e))
+                }
+                getAndRemoveBreathingClasses(e) {
+                    const t = [];
+                    return ['breathing-natural', 'breathing-sway', 'breathing-pulse', 'breathing-rhythmic'].forEach(a => {
+                        e.hasClass(a) && (t.push(a),
+                        e.removeClass(a))
+                    }
+                    ),
+                    t.length > 0 && console.log('🌬️ Pausing breathing animation:', t),
+                    t
+                }
+                restoreBreathingClasses(e, t) {
+                    t.length > 0 && (e.addClass(t.join(' ')),
+                    console.log('🌬️ Resuming breathing animation:', t))
+                }
+            }
+            class h {
+                dataManager;
+                uiController;
+                textAnimationManager;
+                stageManager;
+                dialogueHistory = [];
+                currentDialogueIndex = -1;
+                MAX_DIALOGUE_HISTORY = 100;
+                currentBackground = null;
+                nextBackground = null;
+                currentCG = null;
+                displayedCG = null;
+                currentBGM = null;
+                lastMemoirIndexRecorded = -1;
+                constructor(e, t) {
+                    this.dataManager = e,
+                    this.uiController = t,
+                    this.textAnimationManager = new l,
+                    this.stageManager = new d(this.uiController,this.dataManager)
+                }
+                initialize() {
+                    console.log('LLMRP解析器初始化完成')
+                }
+                async parseAndExecute(e, t={}) {
+                    try {
+                        const a = e.match(/<game_response>([\s\S]*?)<\/game_response>/);
+                        if (!a)
+                            return;
+                        const n = a[1];
+                        window.skipChoiceDelay = t.skipChoiceDelay || !1,
+                        console.log('🎬 开始解析新剧情，清空舞台和对话历史'),
+                        await this.stageManager.clearStage(),
+                        this.dialogueHistory = [],
+                        this.currentDialogueIndex = -1,
+                        this.nextBackground = null,
+                        this.currentCG = null,
+                        this.hideCG();
+                        const s = n.split('\n').map(e => e.trim()).filter(e => e);
+                        for (const e of s) {
+                            const t = this.parseLine(e);
+                            t && await this.executeCommand(t)
+                        }
+                        try {
+                            const e = [];
+                            for (const t of s) {
+                                if (t.startsWith('[') && t.endsWith(']'))
+                                    continue;
+                                const a = t.split('|');
+                                if (a.length < 3)
+                                    continue;
+                                const n = (a[0] || '').trim();
+                                let s = a.slice(2).join('|').trim();
+                                if (s = s.replace(/\s*\[action\|[^|]+\|[^|\]]+\]\s*/g, '').trim(),
+                                !s)
+                                    continue;
+                                e.push({
+                                    speaker: n,
+                                    text: s
+                                })
+                            }
+                            this.uiController.setCurrentMemoir(e)
+                        } catch (e) {
+                            console.warn('构建回忆录失败（已忽略）：', e)
+                        }
+                        this.dialogueHistory.length > 0 && (this.currentDialogueIndex = 0,
+                        await this.displayCurrentDialogue()),
+                        this.preloadDialogueImages(),
+                        delete window.skipChoiceDelay,
+                        this.uiController.updateUI()
+                    } catch (e) {
+                        console.error('LLMRP解析失败:', e)
+                    }
+                }
+                parseLine(e) {
+                    const t = e.trim();
+                    if (!t)
+                        return null;
+                    if (t.startsWith('[') && t.endsWith(']')) {
+                        const e = t.slice(1, -1)
+                          , a = e.split('|').map(e => e.trim());
+                        return console.log('🔧 解析方括号指令:', {
+                            content: e,
+                            parts: a,
+                            type: a[0]
+                        }),
+                        {
+                            type: a[0],
+                            parameters: a.slice(1)
+                        }
+                    }
+                    const a = t.indexOf('|')
+                      , n = t.indexOf('|', a + 1);
+                    if (-1 !== a && -1 !== n) {
+                        const e = t.substring(0, a).trim()
+                          , s = t.substring(a + 1, n).trim()
+                          , i = t.substring(n + 1).trim()
+                          , o = [e, s, i];
+                        return console.log('🔍 检查对话指令:', {
+                            line: t,
+                            parts: o
+                        }),
+                        '' === e ? (console.warn('⚠️ 跳过空角色名'),
+                        null) : (console.log('🎭 识别为角色对话:', {
+                            角色名: e,
+                            立绘: s,
+                            对话: i
+                        }),
+                        {
+                            type: 'CHARACTER_DIALOGUE',
+                            parameters: o
+                        })
+                    }
+                    return null
+                }
+                async executeCommand(e) {
+                    switch (e.type) {
+                    case 'CHARACTER_DIALOGUE':
+                        await this.handleCharacterDialogue(e.parameters);
+                        break;
+                    case 'bg':
+                        await this.handleBackgroundCommand(e.parameters[0]);
+                        break;
+                    case 'bgm':
+                        await this.handleBGM(e.parameters[0]);
+                        break;
+                    case 'choice':
+                        this.handleChoice(e.parameters);
+                        break;
+                    case 'cg':
+                        this.handleCGCommand(e.parameters[0]);
+                        break;
+                    case 'hide_cg':
+                        this.handleHideCG();
+                        break;
+                    default:
+                        console.log('❌ 未知或不支持的指令:', e.type, '| 仅支持 [bg|...]、[bgm|...]、[choice|...]、[cg|...]、[hide_cg] 与对话行 角色|立绘|文本')
+                    }
+                }
+                async handleBGM(e) {
+                    if (e && e.trim())
+                        try {
+                            const t = this.convertBGMNameToUrl(e.trim());
+                            if (console.log('🎵 播放BGM:', e, '-> URL:', t),
+                            'undefined' == typeof audioSelect)
+                                return void console.warn('⚠️ 酒馆助手音频API不可用，无法播放BGM');
+                            await audioSelect({
+                                type: 'bgm'
+                            }, t),
+                            this.currentBGM = e.trim(),
+                            console.log('✅ BGM播放指令已发送:', e)
+                        } catch (e) {
+                            console.error('❌ 播放BGM时出错:', e)
+                        }
+                    else
+                        console.warn('⚠️ BGM名称为空，跳过播放')
+                }
+                convertBGMNameToUrl(e) {
+                    return `https://pub-37188cbfafe34cf8a0ea7ca04480b329.r2.dev/${e}.mp3`
+                }
+                async handleBackground(e) {
+                    console.log('🖼️ 切换背景:', e);
+                    const t = this.convertToNetworkUrl(e, 'background');
+                    console.log('🔗 背景URL:', t);
+                    const a = $('#content-area')
+                      , n = $('#background-overlay');
+                    if (!this.currentBackground)
+                        return console.log('🎬 设置初始背景'),
+                        a.css({
+                            'background-image': `url(${t})`,
+                            'background-size': 'cover',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        }),
+                        this.currentBackground = t,
+                        void console.log('✅ 初始背景已设置');
+                    if (this.currentBackground !== t) {
+                        console.log('🎭 开始背景淡入淡出切换');
+                        try {
+                            n.css('opacity', '0'),
+                            await this.sleep(50),
+                            n.css('opacity', '1'),
+                            await this.sleep(500),
+                            a.css({
+                                'background-image': `url(${t})`,
+                                'background-size': 'cover',
+                                'background-position': 'center',
+                                'background-repeat': 'no-repeat'
+                            }),
+                            await this.sleep(50),
+                            n.css('opacity', '0'),
+                            await this.sleep(500),
+                            this.currentBackground = t,
+                            console.log('✅ 背景切换完成')
+                        } catch (e) {
+                            console.error('❌ 背景切换失败:', e),
+                            a.css({
+                                'background-image': `url(${t})`,
+                                'background-size': 'cover',
+                                'background-position': 'center',
+                                'background-repeat': 'no-repeat'
+                            }),
+                            n.css('opacity', '0'),
+                            this.currentBackground = t
+                        }
+                    } else
+                        console.log('🔄 背景相同，跳过切换')
+                }
+                async handleBackgroundCommand(e) {
+                    console.log('📝 处理背景指令:', e);
+                    const t = this.convertToNetworkUrl(e, 'background');
+                    console.log('🧹 场景切换，清理所有立绘'),
+                    await this.stageManager.clearStage(),
+                    this.currentBackground ? (console.log('🔗 后续背景已记录，等待推进时切换:', t),
+                    this.nextBackground = t) : (console.log('🎬 第一个背景，立即显示:', t),
+                    await this.handleBackground(t))
+                }
+                sleep(e) {
+                    return new Promise(t => setTimeout(t, e))
+                }
+                handleCharacterDialogue(e) {
+                    if (e.length < 3)
+                        return void console.warn('🚨 CHARACTER_DIALOGUE指令参数不足:', e);
+                    const [t,a,n] = e;
+                    if (!t || '' === t)
+                        return void console.warn('⚠️ 跳过空角色对话');
+                    let s = n;
+                    const i = s.match(/\s*\[action\|([^|]+)\|([^|\]]+)\]\s*/);
+                    let o, r = null;
+                    if (i) {
+                        r = {
+                            targetCharacter: i[1].trim(),
+                            actionType: i[2].trim()
+                        },
+                        s = s.replace(/\s*\[action\|([^|]+)\|([^|\]]+)\]\s*/g, '').trim(),
+                        console.log('🎭 检测到角色动作指令:', r)
+                    }
+                    console.log('🎭 处理角色对话（记录模式）:', {
+                        characterName: t,
+                        spriteFileName: a,
+                        dialogueText: s,
+                        actionCommand: r
+                    });
+                    let c = !1;
+                    a && '' !== a.trim() ? (o = this.convertToNetworkUrl(a, 'character'),
+                    c = !0,
+                    console.log('🎭 有立绘角色:', t)) : console.log('🗨️ 无立绘角色:', t),
+                    this.addToDialogueHistory({
+                        speaker: t,
+                        text: s,
+                        type: 'dialogue',
+                        backgroundUrl: this.nextBackground || void 0,
+                        characterName: c ? t : void 0,
+                        spriteUrl: o,
+                        cgUrl: this.currentCG,
+                        actionCommand: r
+                    }),
+                    this.nextBackground = null,
+                    console.log('📝 角色对话已记录，等推进时显示立绘和执行动作')
+                }
+                async displayCurrentDialogue() {
+                    if (this.currentDialogueIndex < 0 || this.currentDialogueIndex >= this.dialogueHistory.length)
+                        return;
+                    const e = this.dialogueHistory[this.currentDialogueIndex];
+                    console.log('🎬 显示对话:', e),
+                    e.backgroundUrl && e.backgroundUrl !== this.currentBackground && (console.log('🖼️ 推进到背景切换点，开始切换背景:', e.backgroundUrl),
+                    console.log('🧹 推进到背景切换，清理所有立绘'),
+                    await this.stageManager.clearStage(),
+                    await this.handleBackground(e.backgroundUrl));
+                    const t = e.cgUrl ?? null;
+                    t !== this.displayedCG && (t ? this.showCG(t) : this.hideCG()),
+                    e.characterName && e.spriteUrl ? (console.log('🎭 推进到角色对话，显示立绘:', e.characterName),
+                    await this.stageManager.speakCharacter(e.characterName, e.spriteUrl)) : e.speaker && (console.log('🗨️ 无立绘角色说话，清除暗化效果:', e.speaker),
+                    this.stageManager.clearSpeakerHighlight()),
+                    $('#speaker-name').text(e.speaker),
+                    'choice' === e.type && e.choices ? this.displayChoicesInDialogue(e.choices) : (await this.textAnimationManager.displayText(e.text, $('#dialogue-content')),
+                    this.hideChoiceInput(),
+                    this.currentDialogueIndex > this.lastMemoirIndexRecorded && (this.lastMemoirIndexRecorded = this.currentDialogueIndex)),
+                    e.actionCommand && setTimeout( () => {
+                        this.executeCharacterAction(e.actionCommand.targetCharacter, e.actionCommand.actionType)
+                    }
+                    , 500),
+                    this.updateNavigationButtons()
+                }
+                displayChoicesInDialogue(e) {
+                    console.log('🎯 在对话框中显示选择项:', e);
+                    let t = '<div class="dialogue-choices">';
+                    e.forEach( (e, a) => {
+                        const n = a + 1;
+                        t += `\n        <div class="dialogue-choice-item" data-choice="${n}">\n          <div class="dialogue-choice-btn">\n            <span class="choice-text">${e}</span>\n            <button class="choice-quick-send-btn" data-choice="${n}" title="快速发送此选择">\n              <i class="fas fa-paper-plane"></i>\n            </button>\n          </div>\n        </div>\n      `
+                    }
+                    ),
+                    t += '</div>',
+                    $('#dialogue-content').html(t),
+                    $('.choice-text').off('click').on('click', t => {
+                        t.stopPropagation();
+                        const a = $(t.currentTarget).closest('.dialogue-choice-item')
+                          , n = parseInt(a.data('choice'))
+                          , s = e[n - 1];
+                        console.log('💭 添加选择到行动列表:', {
+                            number: n,
+                            text: s
+                        }),
+                        this.addChoiceToCommands(s)
+                    }
+                    ),
+                    $('.choice-quick-send-btn').off('click').on('click', t => {
+                        t.stopPropagation();
+                        const a = parseInt($(t.currentTarget).data('choice'))
+                          , n = e[a - 1];
+                        console.log('🚀 快速发送选择:', {
+                            number: a,
+                            text: n
+                        }),
+                        this.handleChoiceSelection(a - 1, n)
+                    }
+                    ),
+                    this.showChoiceInput()
+                }
+                executeCharacterAction(e, t) {
+                    console.log('🎭 执行角色动作:', {
+                        targetCharacter: e,
+                        actionType: t
+                    });
+                    try {
+                        this.stageManager.executeCharacterAction(e, t)
+                    } catch (e) {
+                        console.error('❌ 执行角色动作失败:', e)
+                    }
+                }
+                updateNavigationButtons() {
+                    const e = $('#prev-btn')
+                      , t = $('#next-btn');
+                    this.currentDialogueIndex <= 0 ? e.prop('disabled', !0).addClass('disabled') : e.prop('disabled', !1).removeClass('disabled');
+                    const a = this.dialogueHistory[this.currentDialogueIndex]
+                      , n = this.currentDialogueIndex >= this.dialogueHistory.length - 1
+                      , s = a && 'choice' === a.type;
+                    n || s ? (t.prop('disabled', !0).addClass('disabled').removeClass('choice-ready'),
+                    console.log('🚫 禁用Next按钮:', n ? '已是最后对话' : '当前是选择界面')) : t.prop('disabled', !1).removeClass('disabled').removeClass('choice-ready')
+                }
+                async navigatePrevious() {
+                    return this.textAnimationManager.stopCurrentAnimation(),
+                    this.currentDialogueIndex > 0 && (this.currentDialogueIndex--,
+                    await this.displayCurrentDialogue(),
+                    !0)
+                }
+                async navigateNext() {
+                    if (this.textAnimationManager.isPlaying())
+                        return this.textAnimationManager.skipAnimation(),
+                        !0;
+                    const e = this.dialogueHistory[this.currentDialogueIndex];
+                    return e && 'choice' === e.type ? (console.log('🚫 当前是选择界面，禁止导航到下一条对话'),
+                    !1) : this.currentDialogueIndex < this.dialogueHistory.length - 1 && (this.currentDialogueIndex++,
+                    await this.displayCurrentDialogue(),
+                    !0)
+                }
+                getTextAnimationManager() {
+                    return this.textAnimationManager
+                }
+                getCurrentBGM() {
+                    return this.currentBGM
+                }
+                handleChoice(e) {
+                    if (console.log('🎯 选择项:', e),
+                    $('.choice-container').remove(),
+                    window.skipChoiceDelay)
+                        return console.log('🔄 重新渲染模式，将选择项添加到历史但不显示'),
+                        void this.addToDialogueHistory({
+                            speaker: '选择',
+                            text: '请选择你的回应：',
+                            type: 'choice',
+                            choices: e
+                        });
+                    this.addToDialogueHistory({
+                        speaker: '选择',
+                        text: '请选择你的回应：',
+                        type: 'choice',
+                        choices: e,
+                        cgUrl: this.currentCG
+                    }),
+                    console.log('📋 选择项已添加到对话历史')
+                }
+                showChoiceInput() {
+                    const e = $('#player-choice-input');
+                    e.length > 0 && (e.fadeIn(300),
+                    console.log('📝 显示选择输入框'),
+                    this.bindAddChoiceButton())
+                }
+                hideChoiceInput() {
+                    const e = $('#player-choice-input');
+                    e.length > 0 && (e.fadeOut(300),
+                    console.log('📝 隐藏选择输入框'))
+                }
+                bindAddChoiceButton() {
+                    $('#add-choice-btn').off('click.addChoice').on('click.addChoice', e => {
+                        e.preventDefault(),
+                        e.stopPropagation();
+                        const t = $('#choice-text-input')
+                          , a = t.val();
+                        a && a.trim() ? (console.log('💭 添加自定义选择到行动列表:', a.trim()),
+                        this.addChoiceToCommands(a.trim()),
+                        t.val(''),
+                        o().success('选择已添加到行动列表')) : o().warning('请输入选择内容')
+                    }
+                    )
+                }
+                addChoiceToCommands(e) {
+                    console.log('💭 选择已添加到行动列表:', e)
+                }
+                async handleChoiceSelection(e, t) {
+                    console.log('选择了:', t),
+                    $('.dialogue-choices').remove(),
+                    this.hideChoiceInput();
+                    try {
+                        await createChatMessages([{
+                            role: 'user',
+                            message: t
+                        }]),
+                        triggerSlash('/trigger')
+                    } catch (e) {
+                        console.error('发送选择失败:', e)
+                    }
+                }
+                addToDialogueHistory(e) {
+                    if (this.dialogueHistory.push(e),
+                    this.dialogueHistory.length > this.MAX_DIALOGUE_HISTORY) {
+                        const e = this.dialogueHistory.length - this.MAX_DIALOGUE_HISTORY;
+                        this.dialogueHistory.splice(0, e),
+                        this.currentDialogueIndex = Math.max(0, this.currentDialogueIndex - e),
+                        console.log(`📝 对话历史已清理，保留最新${this.MAX_DIALOGUE_HISTORY}条记录`)
+                    }
+                }
+                convertToNetworkUrl(e, t='other') {
+                    if (e.startsWith('http'))
+                        return e;
+                    let a = e.split('/').pop() || e;
+                    // a.includes('.') || (a += 'background' === t ? '.jpg' : '.png'),
+                    return 'https://qianyedoufu.dpdns.org/' + a
+                }
+                preloadDialogueImages() {
+                    try {
+                        const e = new Set;
+                        if (this.dialogueHistory.forEach(t => {
+                            t.backgroundUrl && e.add(t.backgroundUrl),
+                            t.spriteUrl && e.add(t.spriteUrl),
+                            t.cgUrl && e.add(t.cgUrl)
+                        }
+                        ),
+                        0 === e.size)
+                            return void console.log('📷 本楼层无需预加载图片');
+                        console.log(`📷 开始预加载本楼层的 ${e.size} 张图片...`),
+                        Promise.all(Array.from(e).map(e => this.stageManager.preloadImage(e).catch(t => {
+                            console.warn(`⚠️ 预加载图片失败（不影响使用）: ${e}`, t)
+                        }
+                        ))).then( () => {
+                            console.log(`✅ 本楼层 ${e.size} 张图片预加载完成`)
+                        }
+                        ).catch(e => {
+                            console.warn('⚠️ 部分图片预加载失败（不影响使用）', e)
+                        }
+                        )
+                    } catch (e) {
+                        console.warn('⚠️ 预加载图片时出错（不影响使用）:', e)
+                    }
+                }
+                cleanup() {
+                    this.stageManager.cleanup(),
+                    console.log('LLMRP解析器资源已清理')
+                }
+                async destroy() {
+                    this.cleanup(),
+                    await this.stageManager.clearStage(),
+                    $('.choice-container').remove(),
+                    console.log('LLMRP解析器已销毁')
+                }
+                handleCGCommand(e) {
+                    const t = this.convertToNetworkUrl(e, 'cg');
+                    this.currentCG = t,
+                    console.log('🖼️ 记录CG状态:', t)
+                }
+                handleHideCG() {
+                    this.currentCG = null,
+                    console.log('🧹 记录隐藏CG')
+                }
+                showCG(e) {
+                    const t = $('#cg-layer')
+                      , a = $('#cg-image');
+                    a.attr('src') !== e && a.attr('src', e),
+                    t.addClass('active'),
+                    this.displayedCG = e,
+                    this.addCGHoverPreview(a, e),
+                    console.log('🖼️ 显示CG:', e)
+                }
+                addCGHoverPreview(e, t) {
+                    e.off('click.cgPreview'),
+                    console.log('🔧 为CG图片添加点击预览功能:', t, e.length),
+                    e.on('click.cgPreview', e => {
+                        e.preventDefault(),
+                        e.stopPropagation(),
+                        console.log('🖱️ 点击CG显示预览:', t),
+                        this.showCGPreview(t)
+                    }
+                    ),
+                    e.on('mouseenter', () => {
+                        console.log('🖱️ 鼠标进入CG区域')
+                    }
+                    )
+                }
+                async showCGPreview(e) {
+                    console.log('🖼️ 准备显示CG预览弹窗:', e);
+                    try {
+                        console.log('🚀 调用SillyTavern.callGenericPopup');
+                        const t = `<img src="${e}" style="max-width: 100%; height: auto;" alt="CG预览" />`
+                          , a = await SillyTavern.callGenericPopup(t, SillyTavern.POPUP_TYPE.DISPLAY, '🖼️ CG预览', {
+                            large: !0,
+                            wide: !0,
+                            okButton: !1,
+                            cancelButton: !1
+                        });
+                        return console.log('✅ CG预览弹窗显示成功:', a),
+                        setTimeout( () => {
+                            this.adjustPopupForImage()
+                        }
+                        , 100),
+                        a
+                    } catch (t) {
+                        return console.error('❌ 显示CG预览失败:', t),
+                        o().info(`CG预览：${e}`),
+                        null
+                    }
+                }
+                adjustPopupForImage() {
+                    try {
+                        const e = $('.popup');
+                        if (e.length > 0) {
+                            console.log('🔧 调整弹窗容器样式'),
+                            e.css({
+                                'max-width': '95vw',
+                                'max-height': '95vh',
+                                width: 'auto',
+                                height: 'auto',
+                                'aspect-ratio': 'unset'
+                            });
+                            const t = e.find('.popup-content');
+                            t.length > 0 && t.css({
+                                width: 'auto',
+                                height: 'auto',
+                                'max-width': '100%',
+                                'max-height': '100%',
+                                'aspect-ratio': 'unset',
+                                display: 'flex',
+                                'align-items': 'center',
+                                'justify-content': 'center'
+                            });
+                            const a = e.find('img');
+                            a.length > 0 && a.css({
+                                'max-width': '100%',
+                                'max-height': '85vh',
+                                width: 'auto',
+                                height: 'auto',
+                                'object-fit': 'contain'
+                            })
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ 调整弹窗样式失败:', e)
+                    }
+                }
+                hideCG() {
+                    $('#cg-layer').removeClass('active'),
+                    this.displayedCG = null,
+                    console.log('🧹 隐藏CG')
+                }
+            }
+            class r {
+                dataManager;
+                uiController;
+                llmrpParser;
+                constructor(e, t) {
+                    this.dataManager = e,
+                    this.uiController = t
+                }
+                setLLMRPParser(e) {
+                    this.llmrpParser = e
+                }
+                initialize() {
+                    this.setupNavigationEvents(),
+                    this.setupDialogueEvents(),
+                    this.setupSettingsEvents(),
+                    this.initializeBreathingEffect(),
+                    this.initializeKeyboardShortcuts(),
+                    this.initializeFullscreen(),
+                    console.log('事件处理器初始化完成')
+                }
+                initializeKeyboardShortcuts() {
+                    this.getKeyboardShortcutsEnabled() ? (this.setupKeyboardShortcuts(),
+                    console.log('⌨️ 初始化键盘快捷键: 开启')) : console.log('⌨️ 初始化键盘快捷键: 关闭')
+                }
+                initializeFullscreen() {
+                    this.getFullscreenEnabled() ? (this.setupFullscreenListener(),
+                    console.log('🖥️ 初始化双击全屏: 开启')) : console.log('🖥️ 初始化双击全屏: 关闭')
+                }
+                initializeBreathingEffect() {
+                    const e = this.getBreathingEffectSetting();
+                    this.setBreathingEffect(e),
+                    console.log('🫁 初始化呼吸效果: ' + (e ? '开启' : '关闭'))
+                }
+                setupNavigationEvents() {
+                    // 只保留设置按钮的导航
+                    $('#settings-btn').off('click.settings').on('click.settings', e => {
+                        e.stopPropagation();
+                        const t = $('#settings-menu')
+                          , a = $('#app-container');
+                        t.toggleClass('active'),
+                        t.hasClass('active') ? (a.addClass('modal-active'),
+                        this.initBreathingToggleState(),
+                        this.initTextSettingsState(),
+                        this.initBGMSettingsState(),
+                        this.initKeyboardShortcutsState(),
+                        this.initFullscreenState(),
+                        console.log('🎨 激活背景模糊效果')) : (a.removeClass('modal-active'),
+                        console.log('🎨 取消背景模糊效果'))
+                    }
+                    );
+                }
+                setupDialogueEvents() {
+                    console.log('🔧 设置对话事件...');
+                    const e = $('#prev-btn')
+                      , t = $('#next-btn');
+                    console.log('🔍 按钮检查:', {
+                        prevBtn: e.length,
+                        nextBtn: t.length
+                    }),
+                    e.off('click.dialogue').on('click.dialogue', () => {
+                        console.log('🔙 Prev按钮被点击'),
+                        this.handleDialogueNavigation('prev')
+                    }
+                    ),
+                    t.off('click.dialogue').on('click.dialogue', () => {
+                        console.log('▶️ Next按钮被点击'),
+                        this.handleDialogueNavigation('next')
+                    }
+                    ),
+                    console.log('✅ 对话事件绑定完成'),
+                    $('.dialogue-box').off('click.dialogue').on('click.dialogue', e => {
+                        $(e.target).closest('.dialogue-controls').length > 0 || this.handleDialogueAdvance()
+                    }
+                    )
+                }
+                setupSettingsEvents() {
+                    // 只保留设置相关的事件
+                    $('.theme-btn').off('click.settings'),
+                    $('#breathing-toggle').off('change.settings'),
+                    $('#text-animation-type, #text-speed-slider, #font-size-slider').off('change.settings input.settings'),
+                    $('#bgm-toggle').off('change.settings'),
+                    $('#keyboard-shortcuts-toggle').off('change.settings'),
+                    $('#fullscreen-toggle').off('change.settings'),
+                    $('#reset-settings-btn').off('click.settings'),
+                    $(document).off('click.settings'),
+
+                    $('.theme-btn').on('click.settings', e => {
+                        const t = $(e.currentTarget)
+                          , a = t.data('theme');
+                        a && ($('.theme-btn').removeClass('active'),
+                        t.addClass('active'),
+                        this.applyTheme(a))
+                    }
+                    ),
+                    $('#breathing-toggle').on('change.settings', e => {
+                        const t = $(e.currentTarget).is(':checked');
+                        this.setBreathingEffect(t),
+                        console.log('🫁 呼吸效果已' + (t ? '开启' : '关闭'))
+                    }
+                    ),
+                    $('#text-animation-type').on('change.settings', e => {
+                        const t = $(e.currentTarget).val();
+                        console.log(`📝 文字动画类型切换为: ${t}`);
+                        const a = this.llmrpParser?.getTextAnimationManager();
+                        a && a.setAnimationType(t)
+                    }
+                    ),
+                    $('#text-speed-slider').on('input.settings', e => {
+                        let t = 210 - parseInt($(e.currentTarget).val(), 10);
+                        Number.isNaN(t) && (t = 50),
+                        t = Math.max(10, Math.min(200, t)),
+                        $('#text-speed-value').text(`${t}ms`);
+                        const a = this.llmrpParser?.getTextAnimationManager();
+                        a && a.setAnimationSpeed(t)
+                    }
+                    ),
+                    $('#font-size-slider').on('input.settings', e => {
+                        const t = parseInt($(e.currentTarget).val(), 10);
+                        $('#font-size-value').text(`${t}px`);
+                        const a = this.llmrpParser?.getTextAnimationManager();
+                        a && a.setFontSize(t)
+                    }
+                    ),
+                    $('#bgm-toggle').on('change.settings', async e => {
+                        const t = $(e.currentTarget).is(':checked');
+                        await this.setBGMEnabled(t),
+                        console.log(`🎵 BGM播放器${t ? '开启' : '关闭'}完成`)
+                    }
+                    ),
+                    $('#keyboard-shortcuts-toggle').on('change.settings', e => {
+                        const t = $(e.currentTarget).is(':checked');
+                        this.setKeyboardShortcutsEnabled(t),
+                        console.log('⌨️ 键盘快捷键已' + (t ? '开启' : '关闭'))
+                    }
+                    ),
+                    $('#fullscreen-toggle').on('change.settings', e => {
+                        const t = $(e.currentTarget).is(':checked');
+                        this.setFullscreenEnabled(t),
+                        console.log('🖥️ 双击全屏已' + (t ? '开启' : '关闭'))
+                    }
+                    ),
+                    $('#reset-settings-btn').on('click.settings', e => {
+                        e.stopPropagation();
+                        confirm('确定要恢复所有设置为默认值吗？') && (this.resetToDefaultSettings(),
+                        console.log('🔄 设置已恢复为默认值'))
+                    }
+                    ),
+                    $(document).on('click.settings', e => {
+                        if (!$(e.target).closest('#settings-btn, #settings-menu').length) {
+                            const e = $('#settings-menu')
+                              , a = $('#app-container');
+                            e.hasClass('active') && (e.removeClass('active'),
+                            a.removeClass('modal-active'),
+                            console.log('🎨 关闭设置菜单，取消背景模糊'))
+                        }
+                    }
+                    ),
+                    $('#font-selector').off('change.settings').on('change.settings', e => {
+                        const t = $(e.currentTarget).val();
+                        console.log(`🎨 字体切换为: ${t}`);
+                        const a = this.llmrpParser?.getTextAnimationManager();
+                        a && a.setFontFamily(t);
+                    }
+                    )    
+                }
+                async handleDialogueNavigation(e) {
+                    if (console.log(`📖 对话导航: ${e}`),
+                    'next' === e) {
+                        if (this.llmrpParser) {
+                            if (await this.llmrpParser.navigateNext())
+                                return void console.log('📄 显示下一条对话')
+                        }
+                        console.log('📄 已是最新对话 (不自动发送)')
+                    } else {
+                        if (this.llmrpParser) {
+                            if (await this.llmrpParser.navigatePrevious())
+                                return void console.log('📄 显示上一条对话')
+                        }
+                        console.log('📄 已是最早对话 (不自动发送)')
+                    }
+                }
+                handleDialogueAdvance() {
+                    const e = this.llmrpParser?.getTextAnimationManager();
+                    if (e && e.isPlaying())
+                        return e.skipAnimation(),
+                        void console.log('📝 点击对话框：跳过文字动画');
+                    this.handleDialogueNavigation('next'),
+                    console.log('📖 点击对话框：尝试进入下一句对话')
+                }
+                applyTheme(e) {
+                    $('body').attr('data-theme', e);
+                    try {
+                        localStorage.setItem('iswp_theme', e)
+                    } catch {}
+                    try {
+                        document.cookie = `iswp_theme=${encodeURIComponent(e)}; path=/; max-age=31536000`
+                    } catch {}
+                    console.log(`应用主题并已保存: ${e}`)
+                }
+                setBreathingEffect(e) {
+                    try {
+                        localStorage.setItem('iswp_breathing', e.toString())
+                    } catch (e) {
+                        console.warn('Could not save breathing setting to localStorage', e)
+                    }
+                    try {
+                        document.cookie = `iswp_breathing=${e}; path=/; max-age=31536000`
+                    } catch (e) {
+                        console.warn('Could not save breathing setting to cookie', e)
+                    }
+                    e ? window.enableBreathing?.() : window.disableBreathing?.()
+                }
+                initBreathingToggleState() {
+                    const e = this.getBreathingEffectSetting();
+                    $('#breathing-toggle').prop('checked', e)
+                }
+                initTextSettingsState() {
+                    const e = this.llmrpParser?.getTextAnimationManager();
+                    if (!e)
+                        return;
+                    const t = e.getSettings();
+                    $('#text-animation-type').val(t.type);
+                    const a = t.speed
+                      , n = 210 - a;
+                    $('#text-speed-slider').val(n),
+                    $('#text-speed-value').text(`${a}ms`),
+                    $('#font-size-slider').val(t.fontSize),
+                    $('#font-size-value').text(`${t.fontSize}px`)
+                    $('#font-selector').val(t.fontFamily) // 新增：设置字体选择器当前值
+                }
+                getBreathingEffectSetting() {
+                    try {
+                        const e = localStorage.getItem('iswp_breathing');
+                        if (null !== e)
+                            return 'true' === e;
+                        const t = document.cookie.match(/(?:^|; )iswp_breathing=([^;]+)/);
+                        if (t)
+                            return 'true' === t[1]
+                    } catch {}
+                    return !0
+                }
+                resetToDefaultSettings() {
+                    try {
+                        this.applyTheme('dark'),
+                        $('.theme-btn').removeClass('active'),
+                        $('.theme-btn[data-theme="dark"]').addClass('active'),
+                        $('#breathing-toggle').prop('checked', !0),
+                        this.setBreathingEffect(!0);
+                        const e = 50
+                          , t = 210 - e;
+                        $('#text-animation-type').val('typewriter'),
+                        $('#text-speed-slider').val(t),
+                        $('#text-speed-value').text(`${e}ms`),
+                        $('#font-size-slider').val('16'),
+                        $('#font-size-value').text('16px'),
+                        $('#font-selector').val("'Noto Sans SC', sans-serif");
+                        const a = this.llmrpParser?.getTextAnimationManager();
+                        a && (a.setAnimationType('typewriter'),
+                        a.setAnimationSpeed(50),
+                        a.setFontSize(16),
+                        a.setFontFamily("'Noto Sans SC', sans-serif")), // 重置字体
+                        $('#bgm-toggle').prop('checked', !0),
+                        this.setBGMEnabled(!0),
+                        $('#fullscreen-toggle').prop('checked', !1),
+                        this.setFullscreenEnabled(!1),
+                        o().success('设置已恢复为默认值')
+                    } catch (e) {
+                        console.error('恢复默认设置时出错:', e),
+                        o().error('恢复默认设置失败')
+                    }
+                }
+                initBGMSettingsState() {
+                    const e = this.getBGMEnabledSetting();
+                    $('#bgm-toggle').prop('checked', e),
+                    this.setBGMEnabled(e)
+                }
+                async setBGMEnabled(e) {
+                    try {
+                        localStorage.setItem('iswp_bgm_enabled', e.toString())
+                    } catch (e) {
+                        console.warn('Could not save BGM enabled setting to localStorage', e)
+                    }
+                    try {
+                        console.log(`🎵 正在${e ? '开启' : '关闭'}BGM播放器...`),
+                        e ? ('undefined' != typeof audioEnable && (await audioEnable({
+                            type: 'bgm',
+                            state: 'true'
+                        }),
+                        console.log('✅ BGM播放器已启用')),
+                        'undefined' != typeof audioPlay && (await audioPlay({
+                            type: 'bgm',
+                            play: 'true'
+                        }),
+                        console.log('✅ BGM播放已开始/恢复'))) : ('undefined' != typeof audioPlay && (await audioPlay({
+                            type: 'bgm',
+                            play: 'false'
+                        }),
+                        console.log('✅ BGM播放已暂停')),
+                        'undefined' != typeof audioEnable && (await audioEnable({
+                            type: 'bgm',
+                            state: 'false'
+                        }),
+                        console.log('✅ BGM播放器已禁用'))),
+                        console.log(`🎵 BGM${e ? '开启' : '关闭'}操作完成`)
+                    } catch (e) {
+                        console.error('❌ 设置BGM开关时出错:', e);
+                        const t = Object.keys(window).filter(e => e.startsWith('audio'));
+                        console.log('可用的音频API:', t),
+                        t.length || console.warn('⚠️ 酒馆助手音频API完全不可用，可能需要先启用音频播放器插件')
+                    }
+                }
+                getBGMEnabledSetting() {
+                    try {
+                        const e = localStorage.getItem('iswp_bgm_enabled');
+                        if (null !== e)
+                            return 'true' === e
+                    } catch {}
+                    return !0
+                }
+                initKeyboardShortcutsState() {
+                    const e = this.getKeyboardShortcutsEnabled();
+                    $('#keyboard-shortcuts-toggle').prop('checked', e)
+                }
+                setKeyboardShortcutsEnabled(e) {
+                    try {
+                        localStorage.setItem('iswp_keyboard_shortcuts_enabled', e.toString())
+                    } catch (e) {
+                        console.warn('Could not save keyboard shortcuts setting', e)
+                    }
+                    e ? this.setupKeyboardShortcuts() : this.cleanupKeyboardShortcuts()
+                }
+                getKeyboardShortcutsEnabled() {
+                    try {
+                        const e = localStorage.getItem('iswp_keyboard_shortcuts_enabled');
+                        if (null !== e)
+                            return 'true' === e
+                    } catch {}
+                    return !1
+                }
+                setupKeyboardShortcuts() {
+                    this.cleanupKeyboardShortcuts(),
+                    $(document).on('keydown.shortcuts', e => {
+                        if (this.shouldHandleKeyboard())
+                            switch (e.key) {
+                            case ' ':
+                            case 'ArrowRight':
+                                e.preventDefault(),
+                                $('#next-btn').trigger('click');
+                                break;
+                            case 'ArrowLeft':
+                                e.preventDefault(),
+                                $('#prev-btn').trigger('click')
+                            }
+                    }
+                    )
+                }
+                shouldHandleKeyboard() {
+                    return !($('input:focus, textarea:focus').length > 0)
+                }
+                cleanupKeyboardShortcuts() {
+                    $(document).off('.shortcuts')
+                }
+                initFullscreenState() {
+                    const e = this.getFullscreenEnabled();
+                    $('#fullscreen-toggle').prop('checked', e)
+                }
+                setFullscreenEnabled(e) {
+                    try {
+                        localStorage.setItem('iswp_fullscreen_enabled', e.toString())
+                    } catch (e) {
+                        console.warn('Could not save fullscreen setting', e)
+                    }
+                    e ? this.setupFullscreenListener() : this.cleanupFullscreenListener()
+                }
+                getFullscreenEnabled() {
+                    try {
+                        const e = localStorage.getItem('iswp_fullscreen_enabled');
+                        if (null !== e)
+                            return 'true' === e
+                    } catch {}
+                    return !1
+                }
+                setupFullscreenListener() {
+                    this.cleanupFullscreenListener(),
+                    $('#app-container').on('dblclick.fullscreen', e => {
+                        $(e.target).closest('.dialogue-box').length > 0 || $(e.target).closest('#settings-menu').length > 0 || this.toggleFullscreen()
+                    }
+                    )
+                }
+                cleanupFullscreenListener() {
+                    $('#app-container').off('.fullscreen')
+                }
+                toggleFullscreen() {
+                    try {
+                        document.fullscreenElement ? document.exitFullscreen().catch(e => {
+                            console.log(`无法退出全屏模式: ${e.message}`)
+                        }
+                        ) : document.documentElement.requestFullscreen().catch(e => {
+                            console.log(`无法进入全屏模式: ${e.message}`)
+                        }
+                        )
+                    } catch (e) {
+                        console.error('全屏切换失败:', e)
+                    }
+                }
+                destroy() {
+                    this.cleanupKeyboardShortcuts(),
+                    this.cleanupFullscreenListener(),
+                    $('#prev-btn, #next-btn').off('.dialogue'),
+                    $('.dialogue-box').off('.dialogue'),
+                    $('#settings-btn, .theme-btn').off('.settings'),
+                    $('#text-animation-type, #text-speed-slider, #font-size-slider').off('.settings'),
+                    $('#bgm-toggle, #fullscreen-toggle').off('.settings'),
+                    $(document).off('.settings'),
+                    console.log('事件处理器已销毁')
+                }
+            }
+            class u {
+                dataManager;
+                currentView = 'novel';
+                commandManager;
+                constructor(e) {
+                    this.dataManager = e
+                }
+                getCurrentView() {
+                    return this.currentView
+                }
+                getCommandManager() {
+                    return this.commandManager
+                }
+                initialize() {
+                    this.renderInitialUI(),
+                    this.setupViewSwitching(),
+                    console.log('UI控制器初始化完成')
+                }
+                renderInitialUI() {
+                    this.updateDialogue()
+                }
+                updateDialogue() {
+                    const e = $('#speaker-name').text()
+                      , t = $('#dialogue-content').text();
+                    e && '' !== e.trim() || $('#speaker-name').text(''),
+                    t && '' !== t.trim() || $('#dialogue-content').text('')
+                }
+                setupViewSwitching() {}
+                switchView(e) {
+                    console.log('🔄 切换视图到:', e),
+                    this.currentView = e;
+                }
+                _currentMemoir = [];
+                setCurrentMemoir(e) {
+                    this._currentMemoir = Array.isArray(e) ? e : []
+                }
+                updateUI() {
+                    this.updateDialogue()
+                }
+                destroy() {
+                    console.log('UI控制器已销毁')
+                }
+            }
+            let p = null
+              , v = null
+              , f = null
+              , y = null;
+            async function C() {
+                try {
+                    console.log('旮旯给木界面开始加载...'),
+                    function() {
+                        try {
+                            let e = localStorage.getItem('iswp_theme');
+                            if (!e) {
+                                const t = document.cookie.match(/(?:^|; )iswp_theme=([^;]+)/);
+                                e = t ? decodeURIComponent(t[1]) : ''
+                            }
+                            e || (e = 'dark'),
+                            $('body').attr('data-theme', e),
+                            $('.theme-btn').removeClass('active'),
+                            $(`.theme-btn[data-theme="${e}"]`).addClass('active')
+                            // 新增：应用保存的字体
+                            const a = localStorage.getItem('selectedFont');
+                            a && $('body').css('font-family', a);
+                        } catch (e) {
+                            $('body').attr('data-theme', 'dark'),
+                            $('.theme-btn').removeClass('active'),
+                            $('.theme-btn[data-theme="dark"]').addClass('active')
+                        }
+                    }(),
+                    p = {},
+                    v = new u(p),
+                    v.initialize(),
+                    window.enableBreathing = M,
+                    window.disableBreathing = I,
+                    f = new r(p,v),
+                    f.initialize(),
+                    y = new h(p,v),
+                    y.initialize(),
+                    f.setLLMRPParser(y),
+                    function() {
+                        let e = null
+                          , t = null;
+                        const a = setInterval( () => {
+                            if (p && v && y)
+                                try {
+                                    if ('undefined' == typeof getCurrentMessageId || 'undefined' == typeof getChatMessages)
+                                        return;
+                                    const a = getCurrentMessageId()
+                                      , n = getChatMessages(a)[0];
+                                    if (n && n.message) {
+                                        const s = n.message || '';
+                                        if (a === e && s === t)
+                                            return;
+                                        s.includes('<game_response>') && (console.log('🎮 检测到新的LLMRP消息，开始解析...'),
+                                        console.log('📝 消息ID:', a, '上次ID:', e),
+                                        console.log('📝 消息内容:', s),
+                                        e = a,
+                                        t = s,
+                                        (async () => {
+                                            try {
+                                                await y.parseAndExecute(s),
+                                                console.log('✅ LLMRP消息解析完成:', a)
+                                            } catch (a) {
+                                                console.error('❌ LLMRP解析出错:', a),
+                                                e = null,
+                                                t = null
+                                            }
+                                        }
+                                        )())
+                                    }
+                                } catch (e) {}
+                            else
+                                clearInterval(a)
+                        }
+                        , 1e3);
+                        window.gameMessageInterval = a
+                    }(),
+                    console.log('旮旯给木界面加载完成')
+                } catch (t) {
+                    console.error('旮旯给木界面加载失败:', t),
+                    e = '界面加载失败，请刷新页面重试',
+                    'undefined' != typeof toastr ? toastr.error(e, '错误', {
+                        timeOut: 5e3,
+                        positionClass: 'toast-top-right'
+                    }) : console.error(e)
+                }
+                var e
+            }
+            function w() {
+                try {
+                    console.log('旮旯给木界面开始卸载...'),
+                    y && (y.cleanup(),
+                    y.destroy().catch(console.error),
+                    y = null),
+                    f && (f.destroy(),
+                    f = null),
+                    v && (v.destroy(),
+                    v = null),
+                    p = null,
+                    function() {
+                        window.gameMessageInterval && (clearInterval(window.gameMessageInterval),
+                        delete window.gameMessageInterval);
+                        D(),
+                        $(window).off('pagehide.gameApp'),
+                        $(document).off('click.gameApp')
+                    }(),
+                    console.log('旮旯给木界面卸载完成')
+                } catch (e) {
+                    console.error('旮旯给木界面卸载时出错:', e)
+                }
+            }
+            function M() {
+                !function() {
+                    try {
+                        console.log('🫁 开始启用角色立绘呼吸效果...'),
+                        A(),
+                        function() {
+                            if ('undefined' == typeof MutationObserver)
+                                return void console.warn('⚠️ 浏览器不支持MutationObserver，无法自动为新增角色添加呼吸效果');
+                            const e = new MutationObserver(e => {
+                                let t = !1;
+                                e.forEach(e => {
+                                    e.addedNodes.forEach(e => {
+                                        if (e.nodeType === Node.ELEMENT_NODE) {
+                                            const a = e;
+                                            a.classList && a.classList.contains('character-sprite') && a.classList.contains('dynamic') && (t = !0);
+                                            $(a).find('.character-sprite.dynamic').length > 0 && (t = !0)
+                                        }
+                                    }
+                                    )
+                                }
+                                ),
+                                t && setTimeout( () => {
+                                    (function() {
+                                        try {
+                                            const e = localStorage.getItem('iswp_breathing');
+                                            if (null !== e)
+                                                return 'true' === e;
+                                            const t = document.cookie.match(/(?:^|; )iswp_breathing=([^;]+)/);
+                                            if (t)
+                                                return 'true' === t[1]
+                                        } catch (e) {
+                                            console.warn('无法读取呼吸效果设置，使用默认值', e)
+                                        }
+                                        return !0
+                                    }
+                                    )() && A()
+                                }
+                                , 100)
+                            }
+                            );
+                            e.observe(document.body, {
+                                childList: !0,
+                                subtree: !0
+                            }),
+                            window.characterBreathingObserver = e,
+                            console.log('👀 已设置角色立绘观察器，将自动为新增角色添加呼吸效果')
+                        }(),
+                        console.log('✅ 角色立绘呼吸效果已启用')
+                    } catch (e) {
+                        console.error('❌ 启用角色立绘呼吸效果失败:', e)
+                    }
+                }(),
+                console.log('✅ 已启用角色立绘呼吸效果')
+            }
+            function I() {
+                $('.character-sprite.dynamic').removeClass('breathing-natural breathing-sway breathing-pulse breathing-rhythmic'),
+                D(),
+                console.log('🚫 已禁用所有角色立绘呼吸效果')
+            }
+            function k() {
+                return {
+                    gameDataManager: p,
+                    uiController: v,
+                    eventHandler: f,
+                    llmrpParser: y
+                }
+            }
+            function S() {
+                v && v.updateUI()
+            }
+            function x() {
+                console.log('游戏状态已保存')
+            }
+            function A() {
+                const e = $('.character-sprite.dynamic');
+                console.log(`🎭 找到 ${e.length} 个角色立绘`),
+                e.each(function() {
+                    const e = $(this);
+                    e.hasClass('breathing-natural') || (e.addClass('breathing-natural'),
+                    console.log('🫁 已为角色立绘添加自然真实呼吸效果:', e.attr('class')))
+                })
+            }
+            function D() {
+                window.characterBreathingObserver && (window.characterBreathingObserver.disconnect(),
+                delete window.characterBreathingObserver,
+                console.log('🧹 已清理角色立绘呼吸效果观察器'))
+            }
+        }
+    }
+      , t = {};
+    function a(n) {
+        var s = t[n];
+        if (void 0 !== s)
+            return s.exports;
+        var i = t[n] = {
+            exports: {}
+        };
+        return e[n](i, i.exports, a),
+        i.exports
+    }
+    a.n = e => {
+        var t = e && e.__esModule ? () => e.default : () => e;
+        return a.d(t, {
+            a: t
+        }),
+        t
+    }
+    ,
+    a.d = (e, t) => {
+        for (var n in t)
+            a.o(t, n) && !a.o(e, n) && Object.defineProperty(e, n, {
+                    enumerable: !0,
+                    get: t[n]
+                })
+    }
+    ,
+    a.o = (e, t) => Object.prototype.hasOwnProperty.call(e, t),
+    a.r = e => {
+        'undefined' != typeof Symbol && Symbol.toStringTag && Object.defineProperty(e, Symbol.toStringTag, {
+            value: 'Module'
+        }),
+        Object.defineProperty(e, '__esModule', {
+            value: !0
+        })
+    }
+    ;
+    var n = a(387);
+    $( () => {
+        (0,
+        n.onLoad)()
+    }
+    ),
+    $(window).on('pagehide', () => {
+        (0,
+        n.onUnload)()
+    }
+    );
+</script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500&family=Kaiti+SC:wght@400;700&family=Dancing+Script:wght@400;700&family=ZCOOL+KuaiLe&family=Press+Start+2P&family=Heiti+SC:wght@400;700&display=swap');
+        :root {
+            --bg-gradient: #6262629e;
+            --text-color: #f5f5f7;
+            --primary-color: #0a84ff;
+            --primary-color-light: rgba(10,132,255,0.2);
+            --primary-color-lighter: rgba(10,132,255,0.3);
+            --ui-bg: rgba(29,29,31,0.7);
+            --ui-bg-heavy: rgba(29,29,31,0.85);
+            --ui-border-color: rgba(255,255,255,0.1);
+            --shadow-color-light: rgba(0,0,0,0.2);
+            --shadow-color-medium: rgba(0,0,0,0.3);
+            --blur-intensity: 20px;
+            --gold-color: #ffd700
+        }
+
+        [data-theme=light] {
+            --bg-gradient: #6262629e;
+            --text-color: #1d1d1f;
+            --primary-color: #007aff;
+            --primary-color-light: rgba(0,122,255,0.1);
+            --primary-color-lighter: rgba(0,122,255,0.2);
+            --ui-bg: rgba(255,255,255,0.8);
+            --ui-bg-heavy: rgba(255,255,255,0.95);
+            --ui-border-color: rgba(0,0,0,0.1);
+            --shadow-color-light: rgba(0,0,0,0.1);
+            --shadow-color-medium: rgba(0,0,0,0.15);
+            --blur-intensity: 20px;
+            --gold-color: #d4af37
+        }
+
+        [data-theme=light] * {
+            color: var(--text-color) !important
+        }
+
+        [data-theme=dark] {
+            --bg-gradient: #6262629e;
+            --text-color: #f5f5f7;
+            --primary-color: #0a84ff;
+            --primary-color-light: rgba(10,132,255,0.2);
+            --primary-color-lighter: rgba(10,132,255,0.3);
+            --ui-bg: rgba(29,29,31,0.7);
+            --ui-bg-heavy: rgba(29,29,31,0.85);
+            --ui-border-color: rgba(255,255,255,0.1);
+            --shadow-color-light: rgba(0,0,0,0.2);
+            --shadow-color-medium: rgba(0,0,0,0.3);
+            --blur-intensity: 20px;
+            --gold-color: #ffd700
+        }
+
+        [data-theme=glass] {
+            --bg-gradient: #6262629e;
+            --text-color: #1d1d1f;
+            --primary-color: #007aff;
+            --primary-color-light: rgba(0,122,255,0.1);
+            --primary-color-lighter: rgba(0,122,255,0.2);
+            --ui-bg: rgba(255,255,255,0.3);
+            --ui-bg-heavy: rgba(255,255,255,0.4);
+            --ui-border-color: rgba(0,0,0,0.1);
+            --shadow-color-light: rgba(0,0,0,0.1);
+            --shadow-color-medium: rgba(0,0,0,0.15);
+            --blur-intensity: 30px;
+            --gold-color: #d4af37
+        }
+
+        [data-theme=glass] * {
+            color: var(--text-color) !important
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            overflow: hidden;
+            width: 100%;
+            aspect-ratio: 16/9;
+            transition: background .5s ease,color .5s ease
+        }
+
+        body[data-theme=dark] {
+            --bg-gradient: #6262629e;
+            --text-color: #f5f5f7;
+            --primary-color: #0a84ff;
+            --primary-color-light: rgba(10,132,255,0.2);
+            --primary-color-lighter: rgba(10,132,255,0.3);
+            --ui-bg: rgba(29,29,31,0.7);
+            --ui-bg-heavy: rgba(29,29,31,0.85);
+            --ui-border-color: rgba(255,255,255,0.1);
+            --gold-color: #ffd700
+        }
+
+        body[data-theme=glass] {
+            --ui-bg: rgba(255,255,255,0.3);
+            --ui-bg-heavy: rgba(255,255,255,0.4);
+            --blur-intensity: 30px
+        }
+
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            position: relative
+        }
+
+        #app-container.modal-active>#content-area {
+            filter: blur(4px);
+            transform: scale(0.98);
+            transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94)
+        }
+
+
+        /* === 视觉小说部分开始 === */
+ #content-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94)
+        }
+
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            opacity: 0;
+            z-index: 2;
+            pointer-events: none;
+            transition: opacity .5s ease
+        }
+
+        .character-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 50px
+        }
+
+        .cg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .3s ease,visibility .3s ease;
+            pointer-events: none
+        }
+
+        .cg-layer .cg-image {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%,-50%) scale(0.85);
+            max-width: min(92%,1200px);
+            max-height: 82%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 20px;
+            background: var(--ui-bg-heavy);
+            border: 1px solid var(--ui-border-color);
+            box-shadow: 0 2px 8px var(--shadow-color-light);
+            filter: blur(8px);
+            transition: transform 600ms cubic-bezier(0.25,0.46,0.45,0.94),filter 400ms ease-out,box-shadow 200ms ease;
+            pointer-events: auto;
+            cursor: pointer;
+            will-change: transform,filter
+        }
+
+        .cg-layer .cg-image:hover {
+            box-shadow: 0 4px 16px var(--shadow-color-light);
+            filter: brightness(105%);
+            transform: translate(-50%,-50%) scale(0.87)
+        }
+
+        .cg-layer .cg-image:active {
+            transform: translate(-50%,-50%) scale(0.83)
+        }
+
+        .cg-layer.active {
+            opacity: 1;
+            visibility: visible
+        }
+
+        .cg-layer.active .cg-image {
+            transform: translate(-50%,-50%) scale(1);
+            filter: blur(0)
+        }
+
+        .character-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            width: 100%;
+            height: 120%;
+            min-height: 400px;
+            margin-top: 0%
+        }
+
+        #character-sprite.character-sprite,.character-sprite.old-sprite,#character-left,#character-right {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important
+        }
+
+        .character-sprite {
+            position: absolute;
+            bottom: -50%;
+            height: 100%;
+            width: auto;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+            pointer-events: auto
+        }
+
+        .character-sprite.dynamic {
+            transition: all .4s cubic-bezier(0.4,0,0.2,1);
+            transform-origin: bottom center
+        }
+
+        .character-sprite.dynamic.pos-left {
+            left: 25%;
+            z-index: 3;
+            transform: translateX(-50%) translateY(-30%)
+        }
+
+        .character-sprite.dynamic.pos-center {
+            left: 50%;
+            z-index: 4;
+            transform: translateX(-50%) translateY(-30%)
+        }
+
+        .character-sprite.dynamic.pos-right {
+            left: 75%;
+            z-index: 3;
+            transform: translateX(-50%) translateY(-30%)
+        }
+
+        .character-sprite.dynamic.pos-three-left {
+            left: 15%;
+            z-index: 3;
+            transform: translateX(-50%) translateY(-30%)
+        }
+
+        .character-sprite.dynamic.pos-three-center {
+            left: 50%;
+            z-index: 4;
+            transform: translateX(-50%) translateY(-30%)
+        }
+
+        .character-sprite.dynamic.pos-three-right {
+            left: 85%;
+            z-index: 3;
+            transform: translateX(-50%) translateY(-30%)
+        }
+
+        .character-sprite.dynamic.entering {
+            opacity: 0
+        }
+
+        .character-sprite.dynamic.entering.pos-left {
+            transform: translateX(-50%) translateY(50px);
+            animation: enterFromBottomCenter .6s ease-out forwards
+        }
+
+        .character-sprite.dynamic.entering.pos-center {
+            transform: translateX(-50%) translateY(50px);
+            animation: enterFromBottomCenter .6s ease-out forwards
+        }
+
+        .character-sprite.dynamic.entering.pos-right {
+            transform: translateX(-50%) translateY(50px);
+            animation: enterFromBottomCenter .6s ease-out forwards
+        }
+
+        .character-sprite.dynamic.entering.pos-three-left {
+            transform: translateX(-50%) translateY(50px);
+            animation: enterFromBottomCenter .6s ease-out forwards
+        }
+
+        .character-sprite.dynamic.entering.pos-three-center {
+            transform: translateX(-50%) translateY(50px);
+            animation: enterFromBottomCenter .6s ease-out forwards
+        }
+
+        .character-sprite.dynamic.entering.pos-three-right {
+            transform: translateX(-50%) translateY(50px);
+            animation: enterFromBottomCenter .6s ease-out forwards
+        }
+
+        .character-sprite.dynamic.exiting {
+            animation: fadeOut .4s ease-in forwards
+        }
+
+        .character-sprite.dynamic.sprite-changing {
+            opacity: .3;
+            transform: scale(0.98);
+            transition: all .2s ease-out
+        }
+
+        .character-sprite.dynamic.dimmed {
+            filter: brightness(0.5) grayscale(0.3);
+            transition: filter .3s ease
+        }
+
+        .character-sprite:not(.dynamic) {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important
+        }
+
+        .character-sprite:not(.dynamic):not([src=""]):not([src="#"]) {
+            display: none !important
+        }
+
+        @keyframes enterFromBottomCenter {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(50px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(-30%)
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1
+            }
+
+            to {
+                opacity: 0
+            }
+        }
+
+        .dialogue-box {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: 1000px;
+            z-index: 5;
+            background: var(--ui-bg-heavy);
+            backdrop-filter: blur(var(--blur-intensity));
+            -webkit-backdrop-filter: blur(var(--blur-intensity));
+            border-radius: 20px;
+            padding: 24px;
+            transition: background-color .5s ease,border-color .5s ease;
+            box-shadow: 0 8px 32px var(--shadow-color-medium);
+            border: 1px solid var(--ui-border-color);
+            pointer-events: auto
+        }
+
+        .character-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary-color-light)
+        }
+
+        .dialogue-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin-bottom: 16px
+        }
+
+        .dialogue-controls {
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+            margin-left: auto
+        }
+
+        .control-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(0,0,0,0);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all .3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .control-btn:hover {
+            color: var(--primary-color);
+            transform: scale(1.2)
+        }
+
+        .control-btn:active {
+            transform: scale(1)
+        }
+
+        .control-btn.disabled,.control-btn:disabled {
+            color: var(--text-color-secondary);
+            cursor: not-allowed;
+            opacity: .5
+        }
+
+        .control-btn.disabled:hover,.control-btn:disabled:hover {
+            color: var(--text-color-secondary);
+            transform: none
+        }
+
+        .control-btn i {
+            font-size: 18px
+        }
+
+        .dialogue-bottom-controls {
+            display: flex;
+            align-items: center;
+            margin-top: 16px;
+            gap: 16px
+        }
+
+        .player-choice-input {
+            flex: 1
+        }
+
+        .player-choice-input .choice-input-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: var(--ui-bg);
+            border: 1px solid var(--ui-border-color);
+            border-radius: 6px;
+            padding: 8px 12px
+        }
+
+        .player-choice-input .choice-input-controls .choice-input-icon {
+            color: #fff;
+            font-size: 14px;
+            flex-shrink: 0
+        }
+
+        .player-choice-input .choice-input-controls #choice-text-input {
+            flex-grow: 1;
+            padding: 6px 8px;
+            border: none;
+            background: rgba(0,0,0,0);
+            color: var(--text-color);
+            font-size: 14px;
+            outline: none
+        }
+
+        .player-choice-input .choice-input-controls #choice-text-input::placeholder {
+            color: var(--text-color-secondary);
+            opacity: .7
+        }
+
+        .player-choice-input .choice-input-controls .choice-add-btn {
+            width: 32px;
+            height: 32px;
+            background: rgba(0,0,0,0);
+            color: var(--text-color);
+            border: none;
+            cursor: pointer;
+            transition: all .3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0
+        }
+
+        .player-choice-input .choice-input-controls .choice-add-btn:hover {
+            color: var(--primary-color);
+            transform: scale(1.2)
+        }
+
+        .player-choice-input .choice-input-controls .choice-add-btn:active {
+            transform: scale(1)
+        }
+
+        .player-choice-input .choice-input-controls .choice-add-btn.clicked {
+            color: #34d399;
+            transform: scale(1.1)
+        }
+
+        .player-choice-input .choice-input-controls .choice-add-btn i {
+            font-size: 16px
+        }
+
+        .character-sprite.dynamic.character-shake.pos-left {
+            animation: characterShakeLeft .6s ease-in-out !important
+        }
+
+        .character-sprite.dynamic.character-shake.pos-center {
+            animation: characterShakeCenter .6s ease-in-out !important
+        }
+
+        .character-sprite.dynamic.character-shake.pos-right {
+            animation: characterShakeRight .6s ease-in-out
+        }
+
+        .character-sprite.dynamic.character-shake.pos-three-left {
+            animation: characterShakeThreeLeft .6s ease-in-out
+        }
+
+        .character-sprite.dynamic.character-shake.pos-three-center {
+            animation: characterShakeThreeCenter .6s ease-in-out
+        }
+
+        .character-sprite.dynamic.character-shake.pos-three-right {
+            animation: characterShakeThreeRight .6s ease-in-out
+        }
+
+        @keyframes characterShakeLeft {
+            0%,100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            10%,30%,50%,70%,90% {
+                transform: translateX(-50%) translateY(-30%) translateX(-5px)
+            }
+
+            20%,40%,60%,80% {
+                transform: translateX(-50%) translateY(-30%) translateX(5px)
+            }
+        }
+
+        @keyframes characterShakeCenter {
+            0%,100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            10%,30%,50%,70%,90% {
+                transform: translateX(-50%) translateY(-30%) translateX(-5px)
+            }
+
+            20%,40%,60%,80% {
+                transform: translateX(-50%) translateY(-30%) translateX(5px)
+            }
+        }
+
+        @keyframes characterShakeRight {
+            0%,100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            10%,30%,50%,70%,90% {
+                transform: translateX(-50%) translateY(-30%) translateX(-5px)
+            }
+
+            20%,40%,60%,80% {
+                transform: translateX(-50%) translateY(-30%) translateX(5px)
+            }
+        }
+
+        @keyframes characterShakeThreeLeft {
+            0%,100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            10%,30%,50%,70%,90% {
+                transform: translateX(-50%) translateY(-30%) translateX(-5px)
+            }
+
+            20%,40%,60%,80% {
+                transform: translateX(-50%) translateY(-30%) translateX(5px)
+            }
+        }
+
+        @keyframes characterShakeThreeCenter {
+            0%,100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            10%,30%,50%,70%,90% {
+                transform: translateX(-50%) translateY(-30%) translateX(-5px)
+            }
+
+            20%,40%,60%,80% {
+                transform: translateX(-50%) translateY(-30%) translateX(5px)
+            }
+        }
+
+        @keyframes characterShakeThreeRight {
+            0%,100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            10%,30%,50%,70%,90% {
+                transform: translateX(-50%) translateY(-30%) translateX(-5px)
+            }
+
+            20%,40%,60%,80% {
+                transform: translateX(-50%) translateY(-30%) translateX(5px)
+            }
+        }
+
+        .character-sprite.dynamic.character-jump-up.pos-left,.character-sprite.dynamic.character-jump-up.pos-center,.character-sprite.dynamic.character-jump-up.pos-right,.character-sprite.dynamic.character-jump-up.pos-three-left,.character-sprite.dynamic.character-jump-up.pos-three-center,.character-sprite.dynamic.character-jump-up.pos-three-right {
+            animation: characterJumpUp .4s ease-out
+        }
+
+        @keyframes characterJumpUp {
+            0% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(-30%) translateY(-25px)
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+        }
+
+        .character-sprite.dynamic.character-jump-down.pos-left,.character-sprite.dynamic.character-jump-down.pos-center,.character-sprite.dynamic.character-jump-down.pos-right,.character-sprite.dynamic.character-jump-down.pos-three-left,.character-sprite.dynamic.character-jump-down.pos-three-center,.character-sprite.dynamic.character-jump-down.pos-three-right {
+            animation: characterJumpDown .4s ease-out
+        }
+
+        @keyframes characterJumpDown {
+            0% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(-30%) translateY(15px)
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+        }
+
+        .character-sprite.dynamic.character-tilt.pos-left,.character-sprite.dynamic.character-tilt.pos-center,.character-sprite.dynamic.character-tilt.pos-right,.character-sprite.dynamic.character-tilt.pos-three-left,.character-sprite.dynamic.character-tilt.pos-three-center,.character-sprite.dynamic.character-tilt.pos-three-right {
+            animation: characterTilt .8s ease-in-out
+        }
+
+        @keyframes characterTilt {
+            0% {
+                transform: translateX(-50%) translateY(-30%) rotate(0deg)
+            }
+
+            25% {
+                transform: translateX(-50%) translateY(-30%) rotate(-4deg)
+            }
+
+            75% {
+                transform: translateX(-50%) translateY(-30%) rotate(4deg)
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(-30%) rotate(0deg)
+            }
+        }
+
+        .character-sprite.dynamic.character-shake,.character-sprite.dynamic.character-jump-up,.character-sprite.dynamic.character-jump-down,.character-sprite.dynamic.character-tilt {
+            pointer-events: none;
+            z-index: inherit
+        }
+
+        .character-sprite.dynamic.breathing-natural.pos-left,.character-sprite.dynamic.breathing-natural.pos-center,.character-sprite.dynamic.breathing-natural.pos-right,.character-sprite.dynamic.breathing-natural.pos-three-left,.character-sprite.dynamic.breathing-natural.pos-three-center,.character-sprite.dynamic.breathing-natural.pos-three-right {
+            animation: naturalBreathing 4.2s cubic-bezier(0.4,0,0.6,1) infinite
+        }
+
+        .character-sprite.dynamic.breathing-sway.pos-left,.character-sprite.dynamic.breathing-sway.pos-center,.character-sprite.dynamic.breathing-sway.pos-right,.character-sprite.dynamic.breathing-sway.pos-three-left,.character-sprite.dynamic.breathing-sway.pos-three-center,.character-sprite.dynamic.breathing-sway.pos-three-right {
+            animation: gentleSway 6.8s cubic-bezier(0.25,0.46,0.45,0.94) infinite
+        }
+
+        .character-sprite.dynamic.breathing-pulse.pos-left,.character-sprite.dynamic.breathing-pulse.pos-center,.character-sprite.dynamic.breathing-pulse.pos-right,.character-sprite.dynamic.breathing-pulse.pos-three-left,.character-sprite.dynamic.breathing-pulse.pos-three-center,.character-sprite.dynamic.breathing-pulse.pos-three-right {
+            animation: vitalPulse 3.8s ease-in-out infinite
+        }
+
+        .character-sprite.dynamic.breathing-natural.pos-left,.character-sprite.dynamic.breathing-natural.pos-center,.character-sprite.dynamic.breathing-natural.pos-right,.character-sprite.dynamic.breathing-natural.pos-three-left,.character-sprite.dynamic.breathing-natural.pos-three-center,.character-sprite.dynamic.breathing-natural.pos-three-right {
+            animation: naturalBreathingRealistic 4s ease-out infinite
+        }
+
+        .character-sprite.dynamic.breathing-rhythmic.pos-left,.character-sprite.dynamic.breathing-rhythmic.pos-center,.character-sprite.dynamic.breathing-rhythmic.pos-right,.character-sprite.dynamic.breathing-rhythmic.pos-three-left,.character-sprite.dynamic.breathing-rhythmic.pos-three-center,.character-sprite.dynamic.breathing-rhythmic.pos-three-right {
+            animation: rhythmicBreathing 2.4s linear infinite
+        }
+
+        @keyframes naturalBreathing {
+            0% {
+                transform: translateX(-50%) translateY(-30%) scale(1)
+            }
+
+            25% {
+                transform: translateX(-50%) translateY(calc(-30% - 1px)) scale(1.002)
+            }
+
+            35% {
+                transform: translateX(-50%) translateY(calc(-30% - 1.2px)) scale(1.003)
+            }
+
+            75% {
+                transform: translateX(-50%) translateY(calc(-30% + 0.8px)) scale(0.999)
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(-30%) scale(1)
+            }
+        }
+
+        @keyframes gentleSway {
+            0% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+
+            25% {
+                transform: translateX(calc(-50% + 0.8px)) translateY(calc(-30% - 0.3px))
+            }
+
+            50% {
+                transform: translateX(calc(-50% + 0.2px)) translateY(calc(-30% + 0.5px))
+            }
+
+            75% {
+                transform: translateX(calc(-50% - 0.6px)) translateY(calc(-30% - 0.2px))
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(-30%)
+            }
+        }
+
+        @keyframes vitalPulse {
+            0%,100% {
+                transform: translateX(-50%) translateY(-30%) scale(1)
+            }
+
+            20% {
+                transform: translateX(-50%) translateY(-30%) scale(1.001)
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(-30%) scale(1.004)
+            }
+
+            80% {
+                transform: translateX(-50%) translateY(-30%) scale(1.001)
+            }
+        }
+
+        @keyframes naturalBreathingRealistic {
+            0% {
+                transform: translateX(-50%) translateY(-30%) scale(1)
+            }
+
+            15% {
+                transform: translateX(-50%) translateY(calc(-30% - 0.3px)) scale(1.0008)
+            }
+
+            33% {
+                transform: translateX(-50%) translateY(calc(-30% - 0.6px)) scale(1.0015)
+            }
+
+            40% {
+                transform: translateX(-50%) translateY(calc(-30% - 0.6px)) scale(1.0015)
+            }
+
+            70% {
+                transform: translateX(-50%) translateY(calc(-30% - 0.2px)) scale(1.0005)
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(-30%) scale(1)
+            }
+        }
+
+        @keyframes rhythmicBreathing {
+            0%,100% {
+                transform: translateX(-50%) translateY(-30%) scale(1)
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(calc(-30% + 1px)) scale(1.002)
+            }
+        }
+
+        .character-sprite.dynamic[class*=breathing-] {
+            pointer-events: auto;
+            z-index: inherit;
+            will-change: transform;
+            backface-visibility: hidden;
+            transform-style: preserve-3d
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+            .character-sprite.dynamic[class*=breathing-] {
+                animation-duration: 8s !important;
+                animation-timing-function: linear !important
+            }
+
+            @keyframes naturalBreathingRealistic {
+                0%,100% {
+                    transform: translateX(-50%) translateY(-30%) scale(1)
+                }
+
+                33% {
+                    transform: translateX(-50%) translateY(calc(-30% - 0.15px)) scale(1.0003)
+                }
+
+                40% {
+                    transform: translateX(-50%) translateY(calc(-30% - 0.15px)) scale(1.0003)
+                }
+            }
+        }
+        /* === 视觉小说部分结束 === */
+
+        /* === 设置菜单相关UI部分 === */
+        .top-header-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+            gap: 20px;
+            pointer-events: auto
+        }
+
+        #main-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            margin: 0;
+            background: var(--ui-bg);
+            border: 1px solid rgba(0,0,0,0);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px var(--shadow-color-light)
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color-light);
+            border-color: var(--primary-color-lighter)
+        }
+
+        .nav-btn.active {
+            background: var(--primary-color)
+        }
+
+        .nav-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(0,0,0,0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            transition: all .4s ease
+        }
+
+        .nav-icon i {
+            font-size: 16px;
+            color: var(--text-color);
+            transition: color .5s ease
+        }
+
+        .nav-btn.active .nav-icon i {
+            color: #fff
+        }
+
+        .nav-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+            white-space: nowrap;
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94);
+            margin-left: 0
+        }
+
+        .nav-btn:hover .nav-text,.nav-btn.active .nav-text {
+            max-width: 60px;
+            opacity: 1;
+            margin-left: 8px;
+            margin-right: 8px
+        }
+
+        .nav-btn.active .nav-text {
+            color: #fff
+        }
+
+        .nav-btn.disabled,.nav-btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            pointer-events: none
+        }
+
+        .nav-btn.disabled:hover,.nav-btn:disabled:hover {
+            background: var(--ui-bg);
+            border-color: var(--ui-border-color)
+        }
+
+        .nav-btn.disabled .nav-text,.nav-btn:disabled .nav-text {
+            max-width: 0;
+            opacity: 0;
+            margin-left: 0;
+            margin-right: 0
+        }
+
+        @media (max-width: 768px) {
+            .nav-text {
+                display:none
+            }
+
+            .nav-icon {
+                margin-right: 0
+            }
+
+            .nav-btn {
+                min-width: 36px;
+                height: 36px;
+                padding: 2px
+            }
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none
+        }
+
+        .settings-popover {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: var(--ui-bg-heavy);
+            backdrop-filter: blur(var(--blur-intensity));
+            -webkit-backdrop-filter: blur(var(--blur-intensity));
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px var(--shadow-color-medium);
+            border: 1px solid var(--ui-border-color);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px) scale(0.95);
+            transition: all .3s cubic-bezier(0.25,0.46,0.45,0.94);
+            z-index: 1000;
+            min-width: 200px;
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 100px);
+            overflow-y: auto
+        }
+
+        .settings-popover::-webkit-scrollbar {
+            display: none
+        }
+
+        .settings-popover {
+            scrollbar-width: none;
+            -ms-overflow-style: none
+        }
+
+        .settings-popover.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1)
+        }
+
+        @media (max-width: 768px) {
+            .settings-popover {
+                position:fixed;
+                top: 50%;
+                left: 50%;
+                right: auto;
+                transform: translate(-50%,-50%) scale(0.95);
+                width: calc(100vw - 40px);
+                max-width: 400px;
+                max-height: calc(100vh - 80px)
+            }
+
+            .settings-popover.active {
+                transform: translate(-50%,-50%) scale(1)
+            }
+        }
+
+        @media (max-width: 480px) {
+            .settings-popover {
+                width:calc(100vw - 20px);
+                padding: 16px;
+                border-radius: 12px;
+                max-height: calc(100vh - 60px)
+            }
+        }
+
+        .settings-section {
+            margin-bottom: 16px
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0
+        }
+
+        .settings-section label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 8px
+        }
+
+        .theme-buttons-container {
+            display: flex;
+            gap: 8px
+        }
+
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--ui-border-color);
+            border-radius: 50%;
+            background: var(--ui-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all .3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px
+        }
+
+        .theme-btn:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.1)
+        }
+
+        .theme-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: #fff
+        }
+
+        .visual-effects-section .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px
+        }
+
+        .visual-effects-section .section-header i {
+            color: var(--primary-color);
+            font-size: 14px
+        }
+
+        .visual-effects-section .section-header .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0
+        }
+
+        .visual-effects-section .settings-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .visual-effects-section .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--ui-bg);
+            border: 1px solid var(--ui-border-color);
+            border-radius: 8px;
+            transition: all .3s ease
+        }
+
+        .visual-effects-section .setting-item:hover:not(.disabled) {
+            background: var(--ui-bg-light);
+            border-color: var(--primary-color-light)
+        }
+
+        .visual-effects-section .setting-item.disabled {
+            opacity: .5;
+            cursor: not-allowed
+        }
+
+        @media (max-width: 480px) {
+            .visual-effects-section .setting-item {
+                flex-direction:column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 10px
+            }
+
+            .visual-effects-section .setting-item .setting-control {
+                width: 100%;
+                display: flex;
+                justify-content: flex-end
+            }
+        }
+
+        .visual-effects-section .setting-item .setting-info {
+            flex: 1
+        }
+
+        .visual-effects-section .setting-item .setting-info .setting-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 2px
+        }
+
+        .visual-effects-section .setting-item .setting-info .setting-description {
+            font-size: 11px;
+            color: var(--text-color);
+            opacity: .7;
+            line-height: 1.3
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle {
+            position: relative;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle input[type=checkbox] {
+            display: none
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle .toggle-track {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: var(--ui-bg-heavy);
+            border: 2px solid var(--ui-border-color);
+            border-radius: 14px;
+            transition: all .3s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle .toggle-track .toggle-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: var(--text-color);
+            border-radius: 50%;
+            transition: all .3s cubic-bezier(0.4,0,0.2,1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1)
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle .toggle-track .toggle-thumb .toggle-icon {
+            font-size: 10px;
+            color: var(--ui-bg-heavy);
+            opacity: 0;
+            transition: opacity .2s ease
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle input[type=checkbox]:checked+.toggle-track {
+            background: var(--primary-color);
+            border-color: var(--primary-color)
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle input[type=checkbox]:checked+.toggle-track .toggle-thumb {
+            left: 26px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,.2)
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle input[type=checkbox]:checked+.toggle-track .toggle-thumb .toggle-icon {
+            opacity: 1;
+            color: var(--primary-color)
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle.disabled {
+            opacity: .5;
+            cursor: not-allowed
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle.disabled .toggle-track {
+            cursor: not-allowed
+        }
+
+        .visual-effects-section .setting-item .setting-control .modern-toggle:not(.disabled):hover .toggle-track {
+            box-shadow: 0 0 0 4px rgba(var(--primary-color-rgb),0.1)
+        }
+
+        .modern-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid var(--border-color,#333);
+            border-radius: 8px;
+            background: var(--input-bg,#2a2a2a);
+            color: var(--text-color,#f5f5f7);
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f7' stroke-width='2'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 36px
+        }
+
+        .modern-select:hover {
+            border-color: var(--accent-color,#007aff);
+            background-color: var(--input-hover-bg,#333)
+        }
+
+        .modern-select:focus {
+            outline: none;
+            border-color: var(--accent-color,#007aff);
+            box-shadow: 0 0 0 2px rgba(0,122,255,.2)
+        }
+
+        .modern-select option {
+            background: var(--input-bg,#2a2a2a);
+            color: var(--text-color,#f5f5f7);
+            padding: 8px
+        }
+
+        .slider-container {
+            width: 100%
+        }
+
+        .slider-container .modern-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--slider-track-bg,#333);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            transition: all .3s ease
+        }
+
+        .slider-container .modern-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-color,#007aff);
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,.2);
+            -webkit-transition: all .3s ease;
+            transition: all .3s ease
+        }
+
+        .slider-container .modern-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,122,255,.3)
+        }
+
+        .slider-container .modern-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-color,#007aff);
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,.2);
+            -moz-transition: all .3s ease;
+            transition: all .3s ease
+        }
+
+        .slider-container .modern-slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,122,255,.3)
+        }
+
+        .slider-container .modern-slider::-webkit-slider-track {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--slider-track-bg,#333)
+        }
+
+        .slider-container .modern-slider::-moz-range-track {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--slider-track-bg,#333);
+            border: none
+        }
+
+        .slider-container .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-secondary,#888)
+        }
+
+        .slider-container .slider-labels span:nth-child(2) {
+            font-weight: 600;
+            color: var(--accent-color,#007aff);
+            background: var(--accent-bg,rgba(0,122,255,0.1));
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px
+        }
+
+        [data-theme=light] .modern-select {
+            --input-bg: #f8f9fa;
+            --input-hover-bg: #e9ecef;
+            --border-color: #dee2e6;
+            --text-color: #212529;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23212529' stroke-width='2'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e")
+        }
+
+        [data-theme=light] .modern-select option {
+            background: #f8f9fa;
+            color: #212529
+        }
+
+        [data-theme=light] .modern-slider {
+            --slider-track-bg: #dee2e6
+        }
+
+        [data-theme=glass] .modern-select {
+            --input-bg: rgba(255,255,255,0.1);
+            --input-hover-bg: rgba(255,255,255,0.15);
+            --border-color: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px)
+        }
+
+        [data-theme=glass] .modern-select option {
+            background: rgba(0,0,0,.8);
+            backdrop-filter: blur(10px)
+        }
+
+        [data-theme=glass] .modern-slider {
+            --slider-track-bg: rgba(255,255,255,0.2)
+        }
+
+        .reset-setting-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 0
+        }
+
+        .reset-setting-item .setting-control {
+            width: 100%;
+            display: flex;
+            justify-content: center
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg,var(--accent-color),var(--accent-color-dark));
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,.1);
+            min-width: 100px
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(135deg,var(--accent-color-dark),var(--accent-color));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.15)
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,.1)
+        }
+
+        .reset-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb),0.3)
+        }
+
+    /* 字体选择器样式 */
+.font-selector-section {
+    margin-bottom: 16px;
+}
+
+.font-selector-section label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+#font-selector {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid var(--ui-border-color);
+    border-radius: 8px;
+    background: var(--ui-bg);
+    color: var(--text-color);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(var(--blur-intensity));
+}
+
+#font-selector:hover {
+    border-color: var(--primary-color-light);
+}
+
+#font-selector:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color-light);
+}
+
+/* 字体预览样式 */
+.font-preview {
+    font-size: 13px;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* 不同字体的具体定义 */
+.font-modern {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+}
+
+.font-elegant {
+    font-family: 'Kaiti SC', serif;
+    font-weight: 400;
+}
+
+.font-script {
+    font-family: 'Dancing Script', cursive;
+    font-weight: 400;
+}
+
+.font-cute {
+    font-family: 'ZCOOL KuaiLe', cursive;
+    font-weight: 400;
+}
+
+.font-pixel {
+    font-family: 'Press Start 2P', cursive;
+    font-weight: 400;
+}
+
+.font-bold {
+    font-family: 'Heiti SC', sans-serif;
+    font-weight: 700;
+}
+</style>
+<body data-theme="dark">
+    <div id="app-container">
+        <main id="content-area">
+            <div id="view-novel" class="view-container active">
+                <div id="background-overlay" class="background-overlay"></div>
+                <div class="character-layer">
+                    <div class="character-container">
+                        <div class="character-hover-trigger"></div>
+                        <img id="character-sprite" class="character-sprite old-sprite" style="display:none!important"/>
+                        <div class="character-status-tooltip">
+                            <div class="status-tooltip-header">
+                                <h3 class="character-fullname" id="character-fullname"></h3>
+                                <p class="character-affiliation" id="character-affiliation"></p>
+                            </div>
+                            <div class="status-tooltip-divider"></div>
+                            <div class="status-tooltip-body" id="status-tooltip-body"></div>
+                            <div class="status-tooltip-divider"></div>
+                            <div class="status-tooltip-footer" id="status-tooltip-footer"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cg-layer" id="cg-layer">
+                    <img id="cg-image" class="cg-image" alt="CG"/>
+                </div>
+                <div class="ui-layer">
+                    <div class="top-header-container">
+                        <nav id="main-nav">
+                            <button class="nav-btn" id="settings-btn">
+                                <div class="nav-icon">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <span class="nav-text">设置</span>
+                            </button>
+                        </nav>
+                    </div>
+                    <div class="dialogue-box">
+                        <div class="character-name" id="speaker-name"></div>
+                        <p class="dialogue-text" id="dialogue-content"></p>
+                        <div class="dialogue-bottom-controls">
+                            <div class="player-choice-input" id="player-choice-input" style="display:none">
+                                <div class="choice-input-controls">
+                                    <i class="fas fa-comment-dots choice-input-icon"></i>
+                                    <input id="choice-text-input" placeholder="输入你想要说的话或采取的行动..."/>
+                                    <button id="add-choice-btn" class="choice-add-btn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="dialogue-controls">
+                                <button class="control-btn" id="prev-btn">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="control-btn" id="next-btn">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 只保留设置菜单，删除其他所有UI菜单 -->
+        <div id="settings-menu" class="settings-popover">
+            <div class="settings-section">
+                <label>主题切换</label>
+                <div class="theme-buttons-container">
+                    <button data-theme="light" class="theme-btn" title="浅色主题">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    <button data-theme="dark" class="theme-btn active" title="深色主题">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button data-theme="glass" class="theme-btn" title="毛玻璃">
+                        <i class="fas fa-layer-group"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="settings-section visual-effects-section">
+                <div class="section-header">
+                    <i class="fas fa-magic"></i>
+                    <label class="section-title">视觉音效</label>
+                </div>
+                <div class="settings-options">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">
+                                <i class="fas fa-lungs"></i>
+                                角色呼吸效果
+                            </div>
+                            <div class="setting-description">为角色立绘添加微妙的呼吸动画效果</div>
+                        </div>
+                        <div class="setting-control">
+                            <label class="modern-toggle">
+                                <input type="checkbox" id="breathing-toggle" checked="checked">
+                                <div class="toggle-track">
+                                    <div class="toggle-thumb">
+                                        <i class="toggle-icon fas fa-check"></i>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">
+                                <i class="fas fa-keyboard"></i>
+                                键盘快捷键
+                            </div>
+                            <div class="setting-description">空格/方向键推进对话</div>
+                        </div>
+                        <div class="setting-control">
+                            <label class="modern-toggle">
+                                <input type="checkbox" id="keyboard-shortcuts-toggle">
+                                <div class="toggle-track">
+                                    <div class="toggle-thumb">
+                                        <i class="toggle-icon fas fa-check"></i>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">
+                                <i class="fas fa-expand"></i>
+                                双击全屏
+                            </div>
+                            <div class="setting-description">双击空白区域进入全屏模式</div>
+                        </div>
+                        <div class="setting-control">
+                            <label class="modern-toggle">
+                                <input type="checkbox" id="fullscreen-toggle">
+                                <div class="toggle-track">
+                                    <div class="toggle-thumb">
+                                        <i class="toggle-icon fas fa-check"></i>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">
+                                <i class="fas fa-volume-up"></i>
+                                背景音乐
+                            </div>
+                            <div class="setting-description">控制游戏背景音乐的播放</div>
+                        </div>
+                        <div class="setting-control">
+                            <label class="modern-toggle">
+                                <input type="checkbox" id="bgm-toggle" checked="checked">
+                                <div class="toggle-track">
+                                    <div class="toggle-thumb">
+                                        <i class="toggle-icon fas fa-check"></i>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-section text-settings-section">
+                <div class="section-header">
+                    <i class="fas fa-font"></i>
+                    <label class="section-title">文字设置</label>
+                </div>
+                <div class="settings-options">
+                <!-- 字体选择器放在这里 -->
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">
+                            <i class="fas fa-palette"></i>
+                            界面字体
+                        </div>
+                        <div class="setting-description">选择整体界面的显示字体</div>
+                    </div>
+                    <div class="setting-control">
+                        <select id="font-selector" class="modern-select">
+                            <option value="'Noto Sans SC', sans-serif">现代简约 (默认)</option>
+                            <option value="'Kaiti SC', serif">典雅宋体</option>
+                            <option value="'Dancing Script', cursive">灵动飘逸</option>
+                            <option value="'ZCOOL KuaiLe', cursive">活泼可爱</option>
+                            <option value="'Press Start 2P', cursive">像素复古</option>
+                            <option value="'Heiti SC', sans-serif">粗犷黑体</option>
+                        </select>
+                        <div class="font-preview">预览：选择的字体将应用到整个界面</div>
+                    </div>
+                </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">
+                                <i class="fas fa-keyboard"></i>
+                                文字显示效果
+                            </div>
+                            <div class="setting-description">选择文字出现的动画效果</div>
+                        </div>
+                        <div class="setting-control">
+                            <select id="text-animation-type" class="modern-select">
+                                <option value="typewriter">打字机效果</option>
+                                <option value="fade">渐显效果</option>
+                                <option value="instant">即时显示</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">
+                                <i class="fas fa-tachometer-alt"></i>
+                                文字速度
+                            </div>
+                            <div class="setting-description">调整文字出现的速度</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="slider-container">
+                                <input type="range" id="text-speed-slider" class="modern-slider" min="10" max="200" value="180" step="10">
+                                <div class="slider-labels">
+                                    <span>慢</span>
+                                    <span id="text-speed-value">30ms</span>
+                                    <span>快</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">
+                                <i class="fas fa-text-height"></i>
+                                字体大小
+                            </div>
+                            <div class="setting-description">调整对话文字的大小</div>
+                        </div>
+                        <div class="setting-control">
+                            <div class="slider-container">
+                                <input type="range" id="font-size-slider" class="modern-slider" min="12" max="32" value="16" step="2">
+                                <div class="slider-labels">
+                                    <span>小</span>
+                                    <span id="font-size-value">16px</span>
+                                    <span>大</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-section default-settings-section">
+                <div class="settings-options">
+                    <div class="setting-item reset-setting-item">
+                        <div class="setting-control">
+                            <button id="reset-settings-btn" class="reset-btn">恢复默认</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+
+    
