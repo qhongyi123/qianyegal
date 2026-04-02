@@ -1,8 +1,18 @@
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="color-scheme" content="dark light">
+    <title>千夜柑橘 · 视觉小说舞台</title>
+    <meta name="description" content="千夜柑橘视觉小说舞台体验">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" integrity="sha512-5VSZ94c6qdN934V3CyMfCVxYvBy06SnVAk0nnBYnCTsRmRykGGBqBPdZiZsa1+lZeXqIu58V38eRcVbk5C29Eg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-EQg6Z9erjRzCQXDpUe1koXSPoaqeEniT730cdpShUMHbOWcZH/5LiCFYI8a9kaI0s5momkGLumZ5qX6LzN04hA==" crossorigin="anonymous"></script>
     <style>
         body {
-            background: #000000bf!important;
-            color: #f5f5f7!important
+            background: var(--app-background, #101828)!important;
+            color: var(--text-color, #f5f5f7)!important;
+            transition: background-color .3s ease, color .3s ease;
         }
     </style>
 <script type="module">
@@ -18,6 +28,64 @@
             a.r(t);
             const i = toastr;
             var o = a.n(i);
+            const BACKGROUND_COLOR_STORAGE_KEY = 'iswp_background_color';
+            const BACKGROUND_COLOR_PRESETS = {
+                aurora: {
+                    color: '#101828',
+                    label: '暮蓝·靛青'
+                },
+                velvet: {
+                    color: '#2b0f3a',
+                    label: '绛紫·暮霞'
+                },
+                linen: {
+                    color: '#f4ecd8',
+                    label: '奶油·暖沙'
+                }
+            };
+            const backgroundColorManager = {
+                presets: BACKGROUND_COLOR_PRESETS,
+                defaultKey: 'aurora',
+                storageKey: BACKGROUND_COLOR_STORAGE_KEY,
+                getSavedKey() {
+                    try {
+                        const e = localStorage.getItem(this.storageKey);
+                        if (e && this.presets[e])
+                            return e
+                    } catch (e) {}
+                    return this.defaultKey
+                },
+                saveKey(e) {
+                    try {
+                        localStorage.setItem(this.storageKey, e)
+                    } catch (e) {
+                        console.warn('无法保存背景色设置:', e)
+                    }
+                },
+                applyKey(e) {
+                    const t = this.presets[e] || this.presets[this.defaultKey];
+                    if (!t)
+                        return;
+                    const a = document.documentElement;
+                    a && a.style && (a.style.setProperty('--app-background', t.color),
+                    a.style.setProperty('--stage-fallback-bg', t.color))
+                }
+            };
+            const initialBackgroundColorKey = backgroundColorManager.getSavedKey();
+            backgroundColorManager.applyKey(initialBackgroundColorKey);
+            const applyGlobalBackgroundColor = e => {
+                const t = backgroundColorManager.presets[e] || backgroundColorManager.presets[backgroundColorManager.defaultKey];
+                if (!t)
+                    return;
+                document.documentElement.style.setProperty('--app-background', t.color),
+                document.documentElement.style.setProperty('--stage-fallback-bg', t.color),
+                document.body && (document.body.style.backgroundColor = t.color),
+                $('#app-container').css('background-color', t.color),
+                $('#content-area').css('background-color', t.color),
+                $('#view-novel').css('background-color', t.color)
+            }
+            ;
+            applyGlobalBackgroundColor(initialBackgroundColorKey);
             class l {
                 currentAnimation = null;
                 isAnimating = !1;
@@ -48,7 +116,7 @@
                     // 同时应用到对话框内容，确保立即生效
                     $('#dialogue-content').css('font-family', e);
                 }
-    
+
                 // 新增：设置字体
                 setFontFamily(e) {
                     this.applyFontFamily(e);
@@ -57,7 +125,7 @@
                 // 新增：获取当前字体
                 getCurrentFont() {
                     return localStorage.getItem('selectedFont') || "'Noto Sans SC', sans-serif";
-                }   
+                }
                 setAnimationSpeed(e) {
                     this.animationSpeed = Math.max(5, Math.min(500, e)),
                     localStorage.setItem('textAnimationSpeed', this.animationSpeed.toString())
@@ -492,6 +560,12 @@
                 currentCG = null;
                 displayedCG = null;
                 currentBGM = null;
+                cgFullscreenScale = 1;
+                cgFullscreenOverlay = null;
+                cgFullscreenImage = null;
+                cgZoomInBtn = null;
+                cgZoomOutBtn = null;
+                cgFullscreenExitBtn = null;
                 lastMemoirIndexRecorded = -1;
                 constructor(e, t) {
                     this.dataManager = e,
@@ -636,7 +710,7 @@
                         console.warn('⚠️ BGM名称为空，跳过播放')
                 }
                 convertBGMNameToUrl(e) {
-                    return `https://pub-37188cbfafe34cf8a0ea7ca04480b329.r2.dev/${e}.mp3`
+                    return `https://pub-a4bd6db4d58146baae34ef804cf68ff0.r2.dev/${encodeURIComponent(e)}`
                 }
                 async handleBackground(e) {
                     console.log('🖼️ 切换背景:', e);
@@ -649,8 +723,9 @@
                         a.css({
                             'background-image': `url(${t})`,
                             'background-size': 'cover',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
+                            'background-position': 'center center',
+                            'background-repeat': 'no-repeat',
+                            'background-color': 'var(--stage-fallback-bg, #101828)'
                         }),
                         this.currentBackground = t,
                         void console.log('✅ 初始背景已设置');
@@ -664,8 +739,9 @@
                             a.css({
                                 'background-image': `url(${t})`,
                                 'background-size': 'cover',
-                                'background-position': 'center',
-                                'background-repeat': 'no-repeat'
+                                'background-position': 'center center',
+                                'background-repeat': 'no-repeat',
+                                'background-color': 'var(--stage-fallback-bg, #101828)'
                             }),
                             await this.sleep(50),
                             n.css('opacity', '0'),
@@ -674,12 +750,13 @@
                             console.log('✅ 背景切换完成')
                         } catch (e) {
                             console.error('❌ 背景切换失败:', e),
-                            a.css({
-                                'background-image': `url(${t})`,
-                                'background-size': 'cover',
-                                'background-position': 'center',
-                                'background-repeat': 'no-repeat'
-                            }),
+                           a.css({
+                               'background-image': `url(${t})`,
+                               'background-size': 'cover',
+                               'background-position': 'center center',
+                               'background-repeat': 'no-repeat',
+                               'background-color': 'var(--stage-fallback-bg, #101828)'
+                           }),
                             n.css('opacity', '0'),
                             this.currentBackground = t
                         }
@@ -770,8 +847,11 @@
                         t += `\n        <div class="dialogue-choice-item" data-choice="${n}">\n          <div class="dialogue-choice-btn">\n            <span class="choice-text">${e}</span>\n            <button class="choice-quick-send-btn" data-choice="${n}" title="快速发送此选择">\n              <i class="fas fa-paper-plane"></i>\n            </button>\n          </div>\n        </div>\n      `
                     }
                     ),
-                    t += '</div>',
+                    t += '</div>';
+                    const a = this.isChoiceAwaitingInput();
                     $('#dialogue-content').html(t),
+                    $('.choice-quick-send-btn').prop('disabled', !a).toggleClass('disabled', !a);
+                    a ? (
                     $('.choice-text').off('click').on('click', t => {
                         t.stopPropagation();
                         const a = $(t.currentTarget).closest('.dialogue-choice-item')
@@ -795,7 +875,11 @@
                         this.handleChoiceSelection(a - 1, n)
                     }
                     ),
-                    this.showChoiceInput()
+                    this.showChoiceInput()) : (
+                    $('.choice-text').off('click'),
+                    $('.choice-quick-send-btn').off('click'),
+                    $('.dialogue-choice-btn').addClass('history-choice'),
+                    this.hideChoiceInput())
                 }
                 executeCharacterAction(e, t) {
                     console.log('🎭 执行角色动作:', {
@@ -960,6 +1044,9 @@
                 }
                 handleHideCG() {
                     this.currentCG = null,
+                    this.closeCGFullscreen(),
+                    $('#cg-image').attr('src', ''),
+                    $('#cg-layer').removeClass('active'),
                     console.log('🧹 记录隐藏CG')
                 }
                 showCG(e) {
@@ -968,85 +1055,129 @@
                     a.attr('src') !== e && a.attr('src', e),
                     t.addClass('active'),
                     this.displayedCG = e,
-                    this.addCGHoverPreview(a, e),
+                    this.attachCGInteractions(a),
                     console.log('🖼️ 显示CG:', e)
                 }
-                addCGHoverPreview(e, t) {
+                attachCGInteractions(e) {
+                    const t = $('#cg-close-btn');
                     e.off('click.cgPreview'),
-                    console.log('🔧 为CG图片添加点击预览功能:', t, e.length),
+                    t.off('click.cgClose')
+                     .on('click.cgClose', a => {
+                        a.preventDefault(),
+                        a.stopPropagation(),
+                        this.hideCG()
+                    })
+                     .attr('tabindex', 0)
+                     .attr('role', 'button')
+                     .attr('aria-label', '关闭CG');
                     e.on('click.cgPreview', e => {
                         e.preventDefault(),
                         e.stopPropagation(),
-                        console.log('🖱️ 点击CG显示预览:', t),
-                        this.showCGPreview(t)
-                    }
-                    ),
-                    e.on('mouseenter', () => {
-                        console.log('🖱️ 鼠标进入CG区域')
-                    }
-                    )
+                        this.openCGFullscreen()
+                    })
+                     .attr('tabindex', 0)
+                     .attr('role', 'button')
+                     .attr('aria-label', '全屏查看CG');
                 }
-                async showCGPreview(e) {
-                    console.log('🖼️ 准备显示CG预览弹窗:', e);
-                    try {
-                        console.log('🚀 调用SillyTavern.callGenericPopup');
-                        const t = `<img src="${e}" style="max-width: 100%; height: auto;" alt="CG预览" />`
-                          , a = await SillyTavern.callGenericPopup(t, SillyTavern.POPUP_TYPE.DISPLAY, '🖼️ CG预览', {
-                            large: !0,
-                            wide: !0,
-                            okButton: !1,
-                            cancelButton: !1
-                        });
-                        return console.log('✅ CG预览弹窗显示成功:', a),
-                        setTimeout( () => {
-                            this.adjustPopupForImage()
+                ensureCGFullscreenOverlay() {
+                    if (this.cgFullscreenOverlay)
+                        return this.cgFullscreenOverlay;
+                    const e = $(`
+                        <div class="cg-fullscreen-overlay" aria-modal="true" role="dialog">
+                            <div class="cg-fullscreen-controls">
+                                <button class="cg-fullscreen-btn" data-action="zoom-in" title="放大"><i class="fas fa-search-plus"></i></button>
+                                <button class="cg-fullscreen-btn" data-action="zoom-out" title="缩小"><i class="fas fa-search-minus"></i></button>
+                                <button class="cg-fullscreen-btn" data-action="exit" title="退出全屏"><i class="fas fa-compress"></i></button>
+                            </div>
+                            <img class="cg-fullscreen-image" alt="CG全屏" />
+                        </div>
+                    `);
+                    $('body').append(e);
+                    this.cgFullscreenOverlay = e;
+                    this.cgFullscreenImage = e.find('.cg-fullscreen-image');
+                    const t = e.find('[data-action="zoom-in"]')
+                      , a = e.find('[data-action="zoom-out"]')
+                      , n = e.find('[data-action="exit"]');
+                    this.cgZoomInBtn = t,
+                    this.cgZoomOutBtn = a,
+                    this.cgFullscreenExitBtn = n,
+                    t.on('click', () => this.zoomFullscreenCG(0.15)),
+                    a.on('click', () => this.zoomFullscreenCG(-0.15)),
+                    n.on('click', () => this.closeCGFullscreen()),
+                    e.on('click', e => {
+                        e.target === e.currentTarget && this.closeCGFullscreen()
+                    }),
+                    e.on('wheel', e => {
+                        if (!this.cgFullscreenOverlay?.hasClass('active'))
+                            return;
+                        e.preventDefault();
+                        const t = e.originalEvent.deltaY;
+                        this.zoomFullscreenCG(t < 0 ? 0.1 : -0.1)
+                    }),
+                    $(document).on('keydown.cgFullscreen', e => {
+                        if (!this.cgFullscreenOverlay?.hasClass('active'))
+                            return;
+                        switch (e.key) {
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            this.zoomFullscreenCG(0.1);
+                            return;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            this.zoomFullscreenCG(-0.1);
+                            return;
+                        case 'Escape':
+                            e.preventDefault(),
+                            this.closeCGFullscreen();
+                            break;
+                        case '+':
+                        case '=':
+                            e.preventDefault(),
+                            this.zoomFullscreenCG(0.15);
+                            break;
+                        case '-':
+                        case '_':
+                            e.preventDefault(),
+                            this.zoomFullscreenCG(-0.15)
                         }
-                        , 100),
-                        a
-                    } catch (t) {
-                        return console.error('❌ 显示CG预览失败:', t),
-                        o().info(`CG预览：${e}`),
-                        null
-                    }
+                    });
+                    return e
                 }
-                adjustPopupForImage() {
-                    try {
-                        const e = $('.popup');
-                        if (e.length > 0) {
-                            console.log('🔧 调整弹窗容器样式'),
-                            e.css({
-                                'max-width': '95vw',
-                                'max-height': '95vh',
-                                width: 'auto',
-                                height: 'auto',
-                                'aspect-ratio': 'unset'
-                            });
-                            const t = e.find('.popup-content');
-                            t.length > 0 && t.css({
-                                width: 'auto',
-                                height: 'auto',
-                                'max-width': '100%',
-                                'max-height': '100%',
-                                'aspect-ratio': 'unset',
-                                display: 'flex',
-                                'align-items': 'center',
-                                'justify-content': 'center'
-                            });
-                            const a = e.find('img');
-                            a.length > 0 && a.css({
-                                'max-width': '100%',
-                                'max-height': '85vh',
-                                width: 'auto',
-                                height: 'auto',
-                                'object-fit': 'contain'
-                            })
-                        }
-                    } catch (e) {
-                        console.warn('⚠️ 调整弹窗样式失败:', e)
-                    }
+                openCGFullscreen() {
+                    if (!this.displayedCG)
+                        return;
+                    const e = this.ensureCGFullscreenOverlay();
+                    this.cgFullscreenImage?.attr('src', this.displayedCG);
+                    this.cgFullscreenScale = 1,
+                    this.cgFullscreenImage?.css({
+                        transform: `scale(${this.cgFullscreenScale})`,
+                        'max-width': '90vw',
+                        'max-height': '90vh'
+                    });
+                    e.addClass('active'),
+                    $('body').addClass('cg-fullscreen-open')
+                }
+                zoomFullscreenCG(e) {
+                    this.cgFullscreenScale = Math.max(0.4, Math.min(3, this.cgFullscreenScale + e)),
+                    this.cgFullscreenImage?.css({
+                        transform: `scale(${this.cgFullscreenScale})`,
+                        'max-width': '90vw',
+                        'max-height': '90vh'
+                    })
+                }
+                closeCGFullscreen() {
+                    this.cgFullscreenOverlay?.removeClass('active'),
+                    this.cgFullscreenScale = 1,
+                    this.cgFullscreenImage?.css({
+                        transform: 'scale(1)',
+                        'max-width': '',
+                        'max-height': ''
+                    }),
+                    $('body').removeClass('cg-fullscreen-open')
                 }
                 hideCG() {
                     $('#cg-layer').removeClass('active'),
+                    this.closeCGFullscreen(),
                     this.displayedCG = null,
                     console.log('🧹 隐藏CG')
                 }
@@ -1055,6 +1186,30 @@
                 dataManager;
                 uiController;
                 llmrpParser;
+                musicBaseUrl = 'https://pub-a4bd6db4d58146baae34ef804cf68ff0.r2.dev/';
+                musicPlaylists = [{
+                    name: '哈基米音乐',
+                    tracks: ['Hillsong Young & Free - Wake (Live).mp3', 'Avicii - The Nights.mp3']
+                }, {
+                    name: '欧美音乐',
+                    tracks: ['Em Beihold - Numb Little Bug.mp3']
+                }, {
+                    name: '纯音乐',
+                    tracks: ['Avicii - Waiting For Love.mp3']
+                }];
+                musicModeOrder = ['sequence', 'loop', 'random'];
+                musicModeLabels = {
+                    sequence: '顺序播放',
+                    loop: '循环播放',
+                    random: '随机播放'
+                };
+                audioElement = null;
+                musicBoxEnabled = !0;
+                activePlaylistIndex = 0;
+                currentTrackIndex = 0;
+                playMode = 'sequence';
+                isMusicPanelOpen = !1;
+                isSeekingMusic = !1;
                 constructor(e, t) {
                     this.dataManager = e,
                     this.uiController = t
@@ -1069,6 +1224,7 @@
                     this.initializeBreathingEffect(),
                     this.initializeKeyboardShortcuts(),
                     this.initializeFullscreen(),
+                    this.initializeMusicPlayer(),
                     console.log('事件处理器初始化完成')
                 }
                 initializeKeyboardShortcuts() {
@@ -1085,20 +1241,42 @@
                     console.log('🫁 初始化呼吸效果: ' + (e ? '开启' : '关闭'))
                 }
                 setupNavigationEvents() {
+                    // 全屏按钮事件
+                    $('#fullscreen-btn').off('.fullscreen').on('click.fullscreen', e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.toggleFullscreen();
+                    }
+                    ),
+                    $(document).off('fullscreenchange.fullscreenBtn').on('fullscreenchange.fullscreenBtn', () => {
+                        const e = Boolean(document.fullscreenElement);
+                        $('#fullscreen-btn').attr('aria-pressed', e);
+                        this.updateFullscreenButtonState(e);
+                    }
+                    ),
+                    this.updateFullscreenButtonState(Boolean(document.fullscreenElement));
+
                     // 只保留设置按钮的导航
                     $('#settings-btn').off('click.settings').on('click.settings', e => {
                         e.stopPropagation();
-                        const t = $('#settings-menu')
-                          , a = $('#app-container');
+                        const t = $('#settings-menu');
                         t.toggleClass('active'),
-                        t.hasClass('active') ? (a.addClass('modal-active'),
-                        this.initBreathingToggleState(),
+                        t.hasClass('active') && (this.initBreathingToggleState(),
                         this.initTextSettingsState(),
-                        this.initBGMSettingsState(),
+                        this.initMusicBoxSettingsState(),
                         this.initKeyboardShortcutsState(),
                         this.initFullscreenState(),
-                        console.log('🎨 激活背景模糊效果')) : (a.removeClass('modal-active'),
-                        console.log('🎨 取消背景模糊效果'))
+                        console.log('🎨 激活设置菜单')),
+                        this.syncModalState()
+                    }
+                    ),
+                    $('#music-btn').off('click.musicPanel').on('click.musicPanel', e => {
+                        e.stopPropagation(),
+                        this.musicBoxEnabled && (this.isMusicPanelOpen = !this.isMusicPanelOpen,
+                        $('#music-player-panel').toggleClass('active', this.isMusicPanelOpen),
+                        $('#music-btn').toggleClass('active', this.isMusicPanelOpen),
+                        this.syncModalState(),
+                        this.renderMusicPlayer())
                     }
                     );
                 }
@@ -1131,11 +1309,14 @@
                     $('.theme-btn').off('click.settings'),
                     $('#breathing-toggle').off('change.settings'),
                     $('#text-animation-type, #text-speed-slider, #font-size-slider').off('change.settings input.settings'),
-                    $('#bgm-toggle').off('change.settings'),
+                    $('#musicbox-toggle').off('change.settings'),
                     $('#keyboard-shortcuts-toggle').off('change.settings'),
                     $('#fullscreen-toggle').off('change.settings'),
                     $('#reset-settings-btn').off('click.settings'),
-                    $(document).off('click.settings'),
+                    $('#music-play-btn, #music-next-btn, #music-mode-btn').off('click.musicPlayer'),
+                    $('#music-progress, #music-volume').off('input.musicPlayer change.musicPlayer'),
+                    $(document).off('click.settings click.musicPlayer'),
+                    $('.background-color-btn').off('click.settings'),
 
                     $('.theme-btn').on('click.settings', e => {
                         const t = $(e.currentTarget)
@@ -1143,6 +1324,14 @@
                         a && ($('.theme-btn').removeClass('active'),
                         t.addClass('active'),
                         this.applyTheme(a))
+                    }
+                    ),
+                    $('.background-color-btn').on('click.settings', e => {
+                        const t = $(e.currentTarget)
+                          , a = t.data('bg-key');
+                        a && (this.applyBackgroundColorChoice(a),
+                        $('.background-color-btn').removeClass('active'),
+                        t.addClass('active'))
                     }
                     ),
                     $('#breathing-toggle').on('change.settings', e => {
@@ -1174,10 +1363,33 @@
                         a && a.setFontSize(t)
                     }
                     ),
-                    $('#bgm-toggle').on('change.settings', async e => {
+                    $('#musicbox-toggle').on('change.settings', async e => {
                         const t = $(e.currentTarget).is(':checked');
-                        await this.setBGMEnabled(t),
-                        console.log(`🎵 BGM播放器${t ? '开启' : '关闭'}完成`)
+                        await this.setMusicBoxEnabled(t),
+                        console.log(`🎵 音乐盒${t ? '开启' : '关闭'}完成`)
+                    }
+                    ),
+                    $('#music-play-btn').on('click.musicPlayer', e => {
+                        e.stopPropagation(),
+                        this.toggleMusicPlayback()
+                    }
+                    ),
+                    $('#music-next-btn').on('click.musicPlayer', e => {
+                        e.stopPropagation(),
+                        this.playNextTrack(!0)
+                    }
+                    ),
+                    $('#music-mode-btn').on('click.musicPlayer', e => {
+                        e.stopPropagation(),
+                        this.cyclePlayMode()
+                    }
+                    ),
+                    $('#music-progress').on('input.musicPlayer change.musicPlayer', e => {
+                        this.seekMusic(parseFloat($(e.currentTarget).val() || 0))
+                    }
+                    ),
+                    $('#music-volume').on('input.musicPlayer change.musicPlayer', e => {
+                        this.setMusicVolume(parseFloat($(e.currentTarget).val() || 1))
                     }
                     ),
                     $('#keyboard-shortcuts-toggle').on('change.settings', e => {
@@ -1199,13 +1411,27 @@
                     }
                     ),
                     $(document).on('click.settings', e => {
-                        if (!$(e.target).closest('#settings-btn, #settings-menu').length) {
-                            const e = $('#settings-menu')
-                              , a = $('#app-container');
-                            e.hasClass('active') && (e.removeClass('active'),
-                            a.removeClass('modal-active'),
-                            console.log('🎨 关闭设置菜单，取消背景模糊'))
-                        }
+                        $(e.target).closest('#settings-btn, #settings-menu').length || ($('#settings-menu').removeClass('active'),
+                        this.syncModalState())
+                    }
+                    ),
+                    $(document).on('click.musicPlayer', e => {
+                        $(e.target).closest('#music-btn, #music-player-panel').length || (this.isMusicPanelOpen = !1,
+                        $('#music-player-panel').removeClass('active'),
+                        $('#music-btn').removeClass('active'),
+                        this.syncModalState())
+                    }
+                    ),
+                    $(document).on('click.musicPlayer', '#music-player-panel .music-playlist-btn', e => {
+                        e.stopPropagation();
+                        const t = Number($(e.currentTarget).data('playlist-index'));
+                        this.selectMusicPlaylist(t)
+                    }
+                    ),
+                    $(document).on('click.musicPlayer', '#music-player-panel .music-track-item', e => {
+                        e.stopPropagation();
+                        const t = Number($(e.currentTarget).data('track-index'));
+                        this.selectMusicTrack(t, !0)
                     }
                     ),
                     $('#font-selector').off('change.settings').on('change.settings', e => {
@@ -1214,7 +1440,7 @@
                         const a = this.llmrpParser?.getTextAnimationManager();
                         a && a.setFontFamily(t);
                     }
-                    )    
+                    )
                 }
                 async handleDialogueNavigation(e) {
                     if (console.log(`📖 对话导航: ${e}`),
@@ -1278,9 +1504,11 @@
                     $('#text-speed-slider').val(n),
                     $('#text-speed-value').text(`${a}ms`),
                     $('#font-size-slider').val(t.fontSize),
-                    $('#font-size-value').text(`${t.fontSize}px`)
-                    $('#font-selector').val(t.fontFamily) // 新增：设置字体选择器当前值
-                }
+                    $('#font-size-value').text(`${t.fontSize}px`),
+                    $('#font-selector').val(t.fontFamily); // 新增：设置字体选择器当前值
+                    const r = backgroundColorManager.getSavedKey();
+                    this.highlightBackgroundChoice(r)
+            }
                 getBreathingEffectSetting() {
                     try {
                         const e = localStorage.getItem('iswp_breathing');
@@ -1311,64 +1539,272 @@
                         a && (a.setAnimationType('typewriter'),
                         a.setAnimationSpeed(50),
                         a.setFontSize(16),
-                        a.setFontFamily("'Noto Sans SC', sans-serif")), // 重置字体
-                        $('#bgm-toggle').prop('checked', !0),
-                        this.setBGMEnabled(!0),
+                        a.setFontFamily("'Noto Sans SC', sans-serif")),
+                        $('#musicbox-toggle').prop('checked', !0),
+                        this.setMusicBoxEnabled(!0),
+                        this.playMode = 'sequence',
+                        this.activePlaylistIndex = 0,
+                        this.currentTrackIndex = 0,
+                        this.saveMusicPlaybackState(),
                         $('#fullscreen-toggle').prop('checked', !1),
                         this.setFullscreenEnabled(!1),
+                        this.setMusicVolume(1),
+                        this.applyBackgroundColorChoice(backgroundColorManager.defaultKey),
+                        this.highlightBackgroundChoice(backgroundColorManager.defaultKey),
+                        this.renderMusicPlayer(),
+                        this.loadCurrentTrack(!1),
                         o().success('设置已恢复为默认值')
                     } catch (e) {
                         console.error('恢复默认设置时出错:', e),
                         o().error('恢复默认设置失败')
                     }
                 }
-                initBGMSettingsState() {
-                    const e = this.getBGMEnabledSetting();
-                    $('#bgm-toggle').prop('checked', e),
-                    this.setBGMEnabled(e)
+                initializeMusicPlayer() {
+                    this.audioElement || (this.audioElement = new Audio,
+                    this.audioElement.preload = 'metadata',
+                    this.bindMusicAudioEvents()),
+                    this.musicBoxEnabled = this.getMusicBoxEnabledSetting(),
+                    this.activePlaylistIndex = this.getSavedPlaylistIndex(),
+                    this.currentTrackIndex = this.getSavedTrackIndex(),
+                    this.playMode = this.getSavedPlayMode(),
+                    this.setMusicVolume(this.getSavedMusicVolume(), !1),
+                    this.renderMusicButtonVisibility(),
+                    this.renderMusicPlayer(),
+                    this.loadCurrentTrack(!1)
                 }
-                async setBGMEnabled(e) {
-                    try {
-                        localStorage.setItem('iswp_bgm_enabled', e.toString())
-                    } catch (e) {
-                        console.warn('Could not save BGM enabled setting to localStorage', e)
-                    }
-                    try {
-                        console.log(`🎵 正在${e ? '开启' : '关闭'}BGM播放器...`),
-                        e ? ('undefined' != typeof audioEnable && (await audioEnable({
-                            type: 'bgm',
-                            state: 'true'
-                        }),
-                        console.log('✅ BGM播放器已启用')),
-                        'undefined' != typeof audioPlay && (await audioPlay({
-                            type: 'bgm',
-                            play: 'true'
-                        }),
-                        console.log('✅ BGM播放已开始/恢复'))) : ('undefined' != typeof audioPlay && (await audioPlay({
-                            type: 'bgm',
-                            play: 'false'
-                        }),
-                        console.log('✅ BGM播放已暂停')),
-                        'undefined' != typeof audioEnable && (await audioEnable({
-                            type: 'bgm',
-                            state: 'false'
-                        }),
-                        console.log('✅ BGM播放器已禁用'))),
-                        console.log(`🎵 BGM${e ? '开启' : '关闭'}操作完成`)
-                    } catch (e) {
-                        console.error('❌ 设置BGM开关时出错:', e);
-                        const t = Object.keys(window).filter(e => e.startsWith('audio'));
-                        console.log('可用的音频API:', t),
-                        t.length || console.warn('⚠️ 酒馆助手音频API完全不可用，可能需要先启用音频播放器插件')
-                    }
+                initMusicBoxSettingsState() {
+                    const e = this.getMusicBoxEnabledSetting();
+                    this.musicBoxEnabled = e,
+                    $('#musicbox-toggle').prop('checked', e),
+                    this.renderMusicButtonVisibility()
                 }
-                getBGMEnabledSetting() {
+                async setMusicBoxEnabled(e) {
+                    this.musicBoxEnabled = e;
                     try {
-                        const e = localStorage.getItem('iswp_bgm_enabled');
+                        localStorage.setItem('iswp_music_box_enabled', e.toString())
+                    } catch (e) {
+                        console.warn('Could not save music box setting to localStorage', e)
+                    }
+                    e || (this.pauseMusic(),
+                    this.isMusicPanelOpen = !1,
+                    $('#music-player-panel').removeClass('active'),
+                    $('#music-btn').removeClass('active')),
+                    this.renderMusicButtonVisibility(),
+                    this.syncModalState()
+                }
+                getMusicBoxEnabledSetting() {
+                    try {
+                        const e = localStorage.getItem('iswp_music_box_enabled');
                         if (null !== e)
                             return 'true' === e
                     } catch {}
                     return !0
+                }
+                getSavedPlaylistIndex() {
+                    try {
+                        const e = parseInt(localStorage.getItem('iswp_music_playlist_index') ?? '0', 10);
+                        return Number.isNaN(e) ? 0 : Math.max(0, Math.min(this.musicPlaylists.length - 1, e))
+                    } catch {
+                        return 0
+                    }
+                }
+                getSavedTrackIndex() {
+                    try {
+                        const e = this.musicPlaylists[this.activePlaylistIndex] || this.musicPlaylists[0]
+                          , t = parseInt(localStorage.getItem('iswp_music_track_index') ?? '0', 10)
+                          , a = e?.tracks?.length ?? 1;
+                        return Number.isNaN(t) ? 0 : Math.max(0, Math.min(a - 1, t))
+                    } catch {
+                        return 0
+                    }
+                }
+                getSavedPlayMode() {
+                    try {
+                        const e = localStorage.getItem('iswp_music_play_mode');
+                        return this.musicModeOrder.includes(e) ? e : 'sequence'
+                    } catch {
+                        return 'sequence'
+                    }
+                }
+                getSavedMusicVolume() {
+                    try {
+                        const e = parseFloat(localStorage.getItem('iswp_music_volume') ?? '1');
+                        return Number.isNaN(e) ? 1 : Math.min(1, Math.max(0, e))
+                    } catch {
+                        return 1
+                    }
+                }
+                saveMusicPlaybackState() {
+                    try {
+                        localStorage.setItem('iswp_music_playlist_index', String(this.activePlaylistIndex)),
+                        localStorage.setItem('iswp_music_track_index', String(this.currentTrackIndex)),
+                        localStorage.setItem('iswp_music_play_mode', this.playMode)
+                    } catch (e) {
+                        console.warn('保存音乐播放器状态失败', e)
+                    }
+                }
+                getCurrentPlaylist() {
+                    return this.musicPlaylists[this.activePlaylistIndex] || this.musicPlaylists[0]
+                }
+                getCurrentTrack() {
+                    return this.getCurrentPlaylist()?.tracks?.[this.currentTrackIndex] ?? ''
+                }
+                getCurrentTrackUrl() {
+                    const e = this.getCurrentTrack();
+                    return e ? `${this.musicBaseUrl}${encodeURIComponent(e)}` : ''
+                }
+                syncModalState() {
+                    const e = $('#settings-menu').hasClass('active') || this.isMusicPanelOpen;
+                    $('#app-container').toggleClass('modal-active', e)
+                }
+                renderMusicButtonVisibility() {
+                    $('#music-btn').toggleClass('is-hidden', !this.musicBoxEnabled)
+                }
+                renderMusicPlayer() {
+                    const e = this.getCurrentPlaylist()
+                      , t = this.getCurrentTrack();
+                    $('#music-playlists').html(this.musicPlaylists.map((e, t) => `<button class="music-playlist-btn ${t === this.activePlaylistIndex ? 'active' : ''}" data-playlist-index="${t}">${e.name}</button>`).join('')),
+                    $('#music-track-list').html((e?.tracks || []).map((e, a) => `<button class="music-track-item ${a === this.currentTrackIndex ? 'active' : ''}" data-track-index="${a}"><span class="music-track-order">${a + 1}</span><span class="music-track-name">${e}</span></button>`).join('')),
+                    $('#music-current-playlist').text(e?.name || '未选择歌单'),
+                    $('#music-current-track').text(t || '未选择音乐'),
+                    $('#music-mode-btn .mode-label').text(this.musicModeLabels[this.playMode] || '顺序播放'),
+                    $('#music-mode-btn').attr('title', this.musicModeLabels[this.playMode] || '顺序播放'),
+                    $('#music-empty-tip').toggleClass('is-hidden', (e?.tracks?.length || 0) > 0),
+                    this.updateMusicPlayButton(),
+                    this.updateMusicProgressUI()
+                }
+                bindMusicAudioEvents() {
+                    this.audioElement && (this.audioElement.addEventListener('loadedmetadata', () => {
+                        this.updateMusicProgressUI()
+                    }),
+                    this.audioElement.addEventListener('timeupdate', () => {
+                        this.isSeekingMusic || this.updateMusicProgressUI()
+                    }),
+                    this.audioElement.addEventListener('play', () => {
+                        this.updateMusicPlayButton()
+                    }),
+                    this.audioElement.addEventListener('pause', () => {
+                        this.updateMusicPlayButton()
+                    }),
+                    this.audioElement.addEventListener('ended', () => {
+                        this.handleMusicEnded()
+                    }),
+                    this.audioElement.addEventListener('volumechange', () => {
+                        $('#music-volume').val(this.audioElement.volume),
+                        this.saveMusicVolume(this.audioElement.volume)
+                    }))
+                }
+                saveMusicVolume(e) {
+                    try {
+                        localStorage.setItem('iswp_music_volume', String(e))
+                    } catch (e) {
+                        console.warn('保存音乐音量失败', e)
+                    }
+                }
+                loadCurrentTrack(e=!1) {
+                    if (!this.audioElement)
+                        return;
+                    const t = this.getCurrentTrackUrl();
+                    t && this.audioElement.src !== t && (this.audioElement.src = t,
+                    this.audioElement.load()),
+                    this.saveMusicPlaybackState(),
+                    this.renderMusicPlayer(),
+                    e && this.playMusic()
+                }
+                async playMusic() {
+                    if (!this.musicBoxEnabled)
+                        return;
+                    this.audioElement?.src || this.loadCurrentTrack(!1);
+                    try {
+                        await this.audioElement?.play()
+                    } catch (e) {
+                        console.warn('播放音乐失败', e)
+                    }
+                }
+                pauseMusic() {
+                    this.audioElement?.pause(),
+                    this.updateMusicPlayButton()
+                }
+                toggleMusicPlayback() {
+                    this.audioElement?.paused ? this.playMusic() : this.pauseMusic()
+                }
+                updateMusicPlayButton() {
+                    const e = !(this.audioElement?.paused ?? !0);
+                    $('#music-play-btn').html(`<i class="fas ${e ? 'fa-pause' : 'fa-play'}"></i><span>${e ? '暂停' : '播放'}</span>`)
+                }
+                updateMusicProgressUI() {
+                    const e = this.audioElement?.currentTime ?? 0
+                      , t = this.audioElement?.duration ?? 0;
+                    $('#music-progress').attr('max', Number.isFinite(t) && t > 0 ? t : 0).val(e),
+                    $('#music-current-time').text(this.formatMusicTime(e)),
+                    $('#music-duration').text(this.formatMusicTime(t))
+                }
+                formatMusicTime(e) {
+                    return Number.isFinite(e) && e >= 0 ? `${String(Math.floor(e / 60)).padStart(2, '0')}:${String(Math.floor(e % 60)).padStart(2, '0')}` : '00:00'
+                }
+                seekMusic(e) {
+                    this.audioElement && (this.isSeekingMusic = !0,
+                    this.audioElement.currentTime = Number.isFinite(e) ? e : 0,
+                    this.updateMusicProgressUI(),
+                    window.setTimeout(() => {
+                        this.isSeekingMusic = !1
+                    }, 50))
+                }
+                setMusicVolume(e, t=!0) {
+                    const a = Math.min(1, Math.max(0, Number.isFinite(e) ? e : 1));
+                    this.audioElement && (this.audioElement.volume = a),
+                    $('#music-volume').val(a),
+                    t && this.saveMusicVolume(a)
+                }
+                selectMusicPlaylist(e) {
+                    if (!Number.isInteger(e) || e < 0 || e >= this.musicPlaylists.length)
+                        return;
+                    this.activePlaylistIndex = e,
+                    this.currentTrackIndex = 0,
+                    this.saveMusicPlaybackState(),
+                    this.loadCurrentTrack(!0)
+                }
+                selectMusicTrack(e, t=!1) {
+                    const a = this.getCurrentPlaylist();
+                    if (!Number.isInteger(e) || e < 0 || e >= (a?.tracks?.length ?? 0))
+                        return;
+                    this.currentTrackIndex = e,
+                    this.saveMusicPlaybackState(),
+                    this.loadCurrentTrack(t)
+                }
+                cyclePlayMode() {
+                    const e = this.musicModeOrder.indexOf(this.playMode);
+                    this.playMode = this.musicModeOrder[(e + 1) % this.musicModeOrder.length],
+                    this.saveMusicPlaybackState(),
+                    this.renderMusicPlayer()
+                }
+                getNextTrackIndex(e=!1) {
+                    const t = this.getCurrentPlaylist()?.tracks?.length ?? 0;
+                    if (!t)
+                        return null;
+                    if ('random' === this.playMode)
+                        return 1 === t ? 0 : (() => {
+                            let e = this.currentTrackIndex;
+                            for (; e === this.currentTrackIndex; )
+                                e = Math.floor(Math.random() * t);
+                            return e
+                        })();
+                    if ('loop' === this.playMode)
+                        return (this.currentTrackIndex + 1) % t;
+                    const a = this.currentTrackIndex + 1;
+                    return a < t ? a : e ? null : this.currentTrackIndex
+                }
+                handleMusicEnded() {
+                    const e = this.getNextTrackIndex(!0);
+                    null === e ? (this.audioElement.currentTime = 0,
+                    this.pauseMusic(),
+                    this.updateMusicProgressUI()) : this.selectMusicTrack(e, !0)
+                }
+                playNextTrack(e=!1) {
+                    const t = this.getNextTrackIndex(e);
+                    null === t ? (this.audioElement.currentTime = 0,
+                    this.pauseMusic(),
+                    this.updateMusicProgressUI()) : this.selectMusicTrack(t, !0)
                 }
                 initKeyboardShortcutsState() {
                     const e = this.getKeyboardShortcutsEnabled();
@@ -1445,26 +1881,44 @@
                 }
                 toggleFullscreen() {
                     try {
-                        document.fullscreenElement ? document.exitFullscreen().catch(e => {
-                            console.log(`无法退出全屏模式: ${e.message}`)
+                        const e = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+                        e.then(() => {
+                            this.updateFullscreenButtonState(Boolean(document.fullscreenElement));
                         }
-                        ) : document.documentElement.requestFullscreen().catch(e => {
-                            console.log(`无法进入全屏模式: ${e.message}`)
+                        ).catch(t => {
+                            console.log(`全屏切换失败: ${t.message}`);
                         }
-                        )
+                        );
                     } catch (e) {
                         console.error('全屏切换失败:', e)
                     }
+                }
+                updateFullscreenButtonState(e) {
+                    const t = $('#fullscreen-btn');
+                    t.attr('aria-pressed', e);
+                    const a = t.find('.nav-icon i');
+                    a.toggleClass('fa-expand', !e).toggleClass('fa-compress', e);
+                    t.find('.nav-text').text(e ? '退出' : '全屏');
+                }
+                applyBackgroundColorChoice(e) {
+                   backgroundColorManager.saveKey(e),
+                   backgroundColorManager.applyKey(e),
+                   applyGlobalBackgroundColor(e)
+                }
+                highlightBackgroundChoice(e) {
+                   $('.background-color-btn').removeClass('active');
+                   $(`.background-color-btn[data-bg-key="${e}"]`).addClass('active')
                 }
                 destroy() {
                     this.cleanupKeyboardShortcuts(),
                     this.cleanupFullscreenListener(),
                     $('#prev-btn, #next-btn').off('.dialogue'),
                     $('.dialogue-box').off('.dialogue'),
-                    $('#settings-btn, .theme-btn').off('.settings'),
+                    $('#settings-btn, #music-btn, .theme-btn').off('.settings .musicPanel'),
                     $('#text-animation-type, #text-speed-slider, #font-size-slider').off('.settings'),
-                    $('#bgm-toggle, #fullscreen-toggle').off('.settings'),
-                    $(document).off('.settings'),
+                    $('#musicbox-toggle, #fullscreen-toggle, #music-play-btn, #music-next-btn, #music-mode-btn').off('.settings .musicPlayer'),
+                    $('#music-progress, #music-volume').off('.musicPlayer'),
+                    $(document).off('.settings .musicPlayer'),
                     console.log('事件处理器已销毁')
                 }
             }
@@ -1772,7 +2226,9 @@
             --shadow-color-light: rgba(0,0,0,0.2);
             --shadow-color-medium: rgba(0,0,0,0.3);
             --blur-intensity: 20px;
-            --gold-color: #ffd700
+            --gold-color: #ffd700;
+            --app-background: #101828;
+            --stage-fallback-bg: #101828
         }
 
         [data-theme=light] {
@@ -1834,13 +2290,19 @@
             box-sizing: border-box
         }
 
+        html {
+            height: 100%;
+            background: var(--app-background, #101828);
+        }
+
         body {
             font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-            background: var(--bg-gradient);
+            background: var(--app-background, var(--bg-gradient));
             color: var(--text-color);
             overflow: hidden;
             width: 100%;
-            aspect-ratio: 16/9;
+            height: 100%;
+            min-height: 100vh;
             transition: background .5s ease,color .5s ease
         }
 
@@ -1866,8 +2328,10 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            height: 100%;
-            position: relative
+            min-height: 100vh;
+            position: relative;
+            background-color: var(--app-background, #101828);
+            transition: background-color .3s ease
         }
 
         #app-container.modal-active>#content-area {
@@ -1876,22 +2340,41 @@
             transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94)
         }
 
+/* === 视觉小说部分开始 === */
+#content-area {
+    flex: 1;
+    position: relative;
+    overflow: visible;
+    transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94);
+    background-color: var(--stage-fallback-bg, #101828);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(28px, 5.5vw, 76px);
+}
 
-        /* === 视觉小说部分开始 === */
- #content-area {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94)
-        }
+#view-novel {
+    position: relative;
+    width: min(100vw, calc(92vh * 16 / 9), 1730px);
+    aspect-ratio: 16 / 9;
+    max-height: 92vh;
+    border-radius: 32px;
+    overflow: hidden;
+    background-color: var(--stage-fallback-bg, #101828);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+    isolation: isolate;
+}
 
-        .background-overlay {
+.background-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
+            background: var(--stage-fallback-bg, #101828);
             opacity: 0;
             z-index: 2;
             pointer-events: none;
@@ -1900,69 +2383,189 @@
 
         .character-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: clamp(20px, 3vh, 32px);
+            left: clamp(20px, 3vw, 32px);
+            right: clamp(20px, 3vw, 32px);
+            bottom: clamp(120px, 8vh, 180px);
+            width: auto;
+            height: auto;
             z-index: 2;
             display: flex;
             justify-content: center;
             align-items: flex-end;
-            padding-bottom: 50px
         }
 
         .cg-layer {
+            position: absolute;
+            top: clamp(40px, 5vh, 72px);
+            left: clamp(48px, 5vw, 96px);
+            right: clamp(48px, 5vw, 96px);
+            bottom: clamp(160px, 12vh, 240px);
+            z-index: 4;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .3s ease,visibility .3s ease;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(10px, 1.8vw, 28px);
+            background: transparent;
+            overflow: visible;
+            border-radius: 24px;
+        }
+
+        .cg-layer::after {
+            display: none;
+        }
+
+        .cg-layer .cg-card {
+            position: relative;
+            width: min(100%, 1180px);
+            max-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            isolation: isolate;
+            z-index: 1;
+        }
+
+        .cg-layer .cg-image {
+            position: relative;
+            max-width: 100%;
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+            border-radius: 24px;
+            background: transparent;
+            border: none;
+            box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+            transition: transform 300ms ease,box-shadow 200ms ease,opacity .3s ease;
+            cursor: zoom-in;
+            opacity: 0;
+        }
+
+        .cg-layer.active .cg-image {
+            opacity: 1;
+        }
+
+        .cg-layer.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            z-index: 6;
+        }
+
+        .ui-layer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 4;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity .3s ease,visibility .3s ease;
+            z-index: 10;
             pointer-events: none
         }
 
-        .cg-layer .cg-image {
+
+        .cg-close-btn {
             position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%,-50%) scale(0.85);
-            max-width: min(92%,1200px);
-            max-height: 82%;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.45);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            transition: background .2s ease, transform .2s ease;
+        }
+
+        .cg-close-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        .cg-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        body.cg-fullscreen-open {
+            overflow: hidden;
+        }
+
+        .cg-fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 5, 15, 0.92);
+            z-index: 9999;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            padding: clamp(20px, 4vw, 60px);
+            padding-bottom: clamp(40px, 8vh, 120px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+
+        .cg-fullscreen-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .cg-fullscreen-overlay .cg-fullscreen-image {
+            display: block;
+            max-width: min(95vw, 1600px);
             width: auto;
             height: auto;
             object-fit: contain;
-            border-radius: 20px;
-            background: var(--ui-bg-heavy);
-            border: 1px solid var(--ui-border-color);
-            box-shadow: 0 2px 8px var(--shadow-color-light);
-            filter: blur(8px);
-            transition: transform 600ms cubic-bezier(0.25,0.46,0.45,0.94),filter 400ms ease-out,box-shadow 200ms ease;
-            pointer-events: auto;
+            border-radius: 28px;
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: 0 25px 90px rgba(0,0,0,0.55);
+            transition: transform 0.2s ease;
+            margin: clamp(40px, 6vh, 80px) auto;
+        }
+
+        .cg-fullscreen-controls {
+            position: fixed;
+            top: clamp(16px, 3vh, 36px);
+            right: clamp(16px, 3vw, 48px);
+            display: flex;
+            gap: 12px;
+            z-index: 10000;
+        }
+
+        .cg-fullscreen-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.45);
+            color: #fff;
             cursor: pointer;
-            will-change: transform,filter
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
         }
 
-        .cg-layer .cg-image:hover {
-            box-shadow: 0 4px 16px var(--shadow-color-light);
-            filter: brightness(105%);
-            transform: translate(-50%,-50%) scale(0.87)
+        .cg-fullscreen-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.6);
+            transform: translateY(-1px);
         }
 
-        .cg-layer .cg-image:active {
-            transform: translate(-50%,-50%) scale(0.83)
-        }
-
-        .cg-layer.active {
-            opacity: 1;
-            visibility: visible
-        }
-
-        .cg-layer.active .cg-image {
-            transform: translate(-50%,-50%) scale(1);
-            filter: blur(0)
+        .cg-fullscreen-btn:active {
+            transform: translateY(0);
         }
 
         .character-container {
@@ -1971,9 +2574,11 @@
             justify-content: center;
             align-items: flex-end;
             width: 100%;
-            height: 120%;
-            min-height: 400px;
-            margin-top: 0%
+            height: 100%;
+            min-height: 0;
+            margin: 0;
+            padding: clamp(16px, 3vw, 48px);
+            gap: clamp(12px, 2vw, 32px);
         }
 
         #character-sprite.character-sprite,.character-sprite.old-sprite,#character-left,#character-right {
@@ -2591,118 +3196,107 @@
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            padding: 20px;
-            width: 100%;
-            gap: 20px;
-            pointer-events: auto
+            position: absolute;
+            top: clamp(20px, 3vh, 48px);
+            right: clamp(16px, 3vw, 48px);
+            padding: 0;
+            border-radius: 999px;
+            background: transparent;
+            backdrop-filter: none;
+            border: none;
+            box-shadow: none;
+            gap: 0;
+            pointer-events: none;
+            z-index: 12;
         }
 
         #main-nav {
             display: flex;
-            align-items: center;
-            gap: 8px
+            align-items: flex-start;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .nav-secondary-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .nav-btn {
             display: flex;
             align-items: center;
-            padding: 4px;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            padding: 0;
             margin: 0;
-            background: var(--ui-bg);
-            border: 1px solid rgba(0,0,0,0);
-            border-radius: 20px;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 2px 8px var(--shadow-color-light)
+            transition: background-color .25s ease, transform .25s ease;
+            box-shadow: none;
         }
 
         .nav-btn:hover {
-            background: var(--primary-color-light);
-            border-color: var(--primary-color-lighter)
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .nav-btn:active {
+            transform: scale(0.95);
         }
 
         .nav-btn.active {
-            background: var(--primary-color)
+            background: rgba(255,255,255,0.2);
         }
 
         .nav-icon {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             background: rgba(0,0,0,0);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: none;
-            transition: all .4s ease
+            transition: all .3s ease;
         }
 
         .nav-icon i {
-            font-size: 16px;
+            font-size: 18px;
             color: var(--text-color);
-            transition: color .5s ease
+            transition: color .3s ease;
         }
 
         .nav-btn.active .nav-icon i {
-            color: #fff
+            color: #fff;
         }
 
         .nav-text {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-color);
-            white-space: nowrap;
-            max-width: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: all .4s cubic-bezier(0.25,0.46,0.45,0.94);
-            margin-left: 0
-        }
-
-        .nav-btn:hover .nav-text,.nav-btn.active .nav-text {
-            max-width: 60px;
-            opacity: 1;
-            margin-left: 8px;
-            margin-right: 8px
-        }
-
-        .nav-btn.active .nav-text {
-            color: #fff
+            display: none;
         }
 
         .nav-btn.disabled,.nav-btn:disabled {
             opacity: .5;
             cursor: not-allowed;
-            pointer-events: none
+            pointer-events: none;
         }
 
-        .nav-btn.disabled:hover,.nav-btn:disabled:hover {
-            background: var(--ui-bg);
-            border-color: var(--ui-border-color)
-        }
-
-        .nav-btn.disabled .nav-text,.nav-btn:disabled .nav-text {
-            max-width: 0;
-            opacity: 0;
-            margin-left: 0;
-            margin-right: 0
+        .nav-btn.is-hidden {
+            display: none;
         }
 
         @media (max-width: 768px) {
-            .nav-text {
-                display:none
+            .nav-btn {
+                width: 40px;
+                height: 40px;
             }
 
             .nav-icon {
-                margin-right: 0
-            }
-
-            .nav-btn {
-                min-width: 36px;
-                height: 36px;
-                padding: 2px
+                width: 28px;
+                height: 28px;
             }
         }
 
@@ -2716,9 +3310,9 @@
             pointer-events: none
         }
 
-        .settings-popover {
+        .settings-popover,
+        .music-player-panel {
             position: absolute;
-            top: 60px;
             right: 20px;
             background: var(--ui-bg-heavy);
             backdrop-filter: blur(var(--blur-intensity));
@@ -2732,10 +3326,22 @@
             transform: translateY(-10px) scale(0.95);
             transition: all .3s cubic-bezier(0.25,0.46,0.45,0.94);
             z-index: 1000;
-            min-width: 200px;
             max-width: calc(100vw - 40px);
             max-height: calc(100vh - 100px);
-            overflow-y: auto
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y
+        }
+
+        .settings-popover {
+            top: 60px;
+            min-width: 200px;
+        }
+
+        .music-player-panel {
+            top: 170px;
+            width: 360px;
         }
 
         .settings-popover::-webkit-scrollbar {
@@ -2747,14 +3353,16 @@
             -ms-overflow-style: none
         }
 
-        .settings-popover.active {
+        .settings-popover.active,
+        .music-player-panel.active {
             opacity: 1;
             visibility: visible;
             transform: translateY(0) scale(1)
         }
 
         @media (max-width: 768px) {
-            .settings-popover {
+            .settings-popover,
+            .music-player-panel {
                 position:fixed;
                 top: 50%;
                 left: 50%;
@@ -2765,7 +3373,8 @@
                 max-height: calc(100vh - 80px)
             }
 
-            .settings-popover.active {
+            .settings-popover.active,
+            .music-player-panel.active {
                 transform: translate(-50%,-50%) scale(1)
             }
         }
@@ -2796,23 +3405,83 @@
         }
 
         .theme-buttons-container {
-            display: flex;
-            gap: 8px
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
-        .theme-btn {
-            width: 40px;
-            height: 40px;
+        .background-color-section {
+            margin-top: 16px;
+        }
+
+        .background-color-buttons {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .background-color-btn {
+            position: relative;
+            width: 100%;
+            padding: 12px 10px;
             border: 2px solid var(--ui-border-color);
-            border-radius: 50%;
+            border-radius: 12px;
             background: var(--ui-bg);
             color: var(--text-color);
             cursor: pointer;
             transition: all .3s ease;
             display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .background-color-btn .background-color-swatch {
+            width: 100%;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--swatch-color, #101828);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+        }
+
+        .background-color-btn .background-color-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: inherit;
+            opacity: .9;
+        }
+
+        .background-color-btn.active,
+        .background-color-btn:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+
+        .background-color-btn.active {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .theme-btn {
+            width: 60px;
+            height: 50px;
+            border: 2px solid var(--ui-border-color);
+            border-radius: 12px;
+            background: var(--ui-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all .3s ease;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 16px
+            font-size: 14px;
+            gap: 4px;
+        }
+
+        .theme-btn i {
+            font-size: 16px;
         }
 
         .theme-btn:hover {
@@ -3133,6 +3802,178 @@
             --slider-track-bg: rgba(255,255,255,0.2)
         }
 
+        .music-player-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .music-player-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .music-player-title h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .music-player-title span {
+            font-size: 12px;
+            opacity: .7;
+            color: var(--text-color);
+        }
+
+        .music-playlists,
+        .music-track-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .music-section-label {
+            margin: 14px 0 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: .8;
+        }
+
+        .music-playlist-btn,
+        .music-track-item {
+            width: 100%;
+            border: 1px solid var(--ui-border-color);
+            background: var(--ui-bg);
+            color: var(--text-color);
+            border-radius: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all .25s ease;
+            text-align: left;
+        }
+
+        .music-playlist-btn:hover,
+        .music-track-item:hover,
+        .music-playlist-btn.active,
+        .music-track-item.active {
+            border-color: var(--primary-color);
+            background: var(--ui-bg-light);
+            transform: translateY(-1px);
+        }
+
+        .music-track-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .music-track-order {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(var(--primary-color-rgb),0.18);
+            color: var(--primary-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .music-track-name {
+            flex: 1;
+            word-break: break-all;
+            font-size: 13px;
+        }
+
+        .music-now-playing {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--ui-bg);
+            border: 1px solid var(--ui-border-color);
+        }
+
+        .music-now-playing .music-meta-label {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: .7;
+        }
+
+        .music-now-playing .music-meta-value {
+            margin-top: 6px;
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .music-progress-group,
+        .music-volume-group {
+            margin-top: 14px;
+        }
+
+        .music-time-row,
+        .music-volume-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: .8;
+        }
+
+        .music-control-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .music-control-btn {
+            border: 1px solid var(--ui-border-color);
+            background: var(--ui-bg);
+            color: var(--text-color);
+            border-radius: 10px;
+            padding: 10px 8px;
+            cursor: pointer;
+            transition: all .25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .music-control-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--ui-bg-light);
+        }
+
+        .music-control-btn .mode-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .music-empty-tip {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: .65;
+        }
+
+        .music-empty-tip.is-hidden {
+            display: none;
+        }
+
         .reset-setting-item {
             display: flex;
             justify-content: center;
@@ -3256,7 +4097,8 @@
 <body data-theme="dark">
     <div id="app-container">
         <main id="content-area">
-            <div id="view-novel" class="view-container active">
+            <div id="view-novel" class="view-container active"
+                 style="background-image: inherit;">
                 <div id="background-overlay" class="background-overlay"></div>
                 <div class="character-layer">
                     <div class="character-container">
@@ -3275,17 +4117,36 @@
                     </div>
                 </div>
                 <div class="cg-layer" id="cg-layer">
-                    <img id="cg-image" class="cg-image" alt="CG"/>
+                    <div class="cg-card">
+                        <button class="cg-close-btn" id="cg-close-btn" aria-label="关闭CG">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <img id="cg-image" class="cg-image" alt="CG"/>
+                    </div>
                 </div>
                 <div class="ui-layer">
                     <div class="top-header-container">
                         <nav id="main-nav">
-                            <button class="nav-btn" id="settings-btn">
+                            <button class="nav-btn" id="fullscreen-btn" aria-pressed="false">
                                 <div class="nav-icon">
-                                    <i class="fas fa-cog"></i>
+                                    <i class="fas fa-expand"></i>
                                 </div>
-                                <span class="nav-text">设置</span>
+                                <span class="nav-text">全屏</span>
                             </button>
+                            <div class="nav-secondary-column">
+                                <button class="nav-btn" id="settings-btn">
+                                    <div class="nav-icon">
+                                        <i class="fas fa-cog"></i>
+                                    </div>
+                                    <span class="nav-text">设置</span>
+                                </button>
+                                <button class="nav-btn" id="music-btn">
+                                    <div class="nav-icon">
+                                        <i class="fas fa-music"></i>
+                                    </div>
+                                    <span class="nav-text">音乐</span>
+                                </button>
+                            </div>
                         </nav>
                     </div>
                     <div class="dialogue-box">
@@ -3316,6 +4177,45 @@
         </main>
 
         <!-- 只保留设置菜单，删除其他所有UI菜单 -->
+        <div id="music-player-panel" class="music-player-panel">
+            <div class="music-player-header">
+                <div class="music-player-title">
+                    <h3>音乐播放器</h3>
+                    <span>仅播放当前所选歌单内的音乐</span>
+                </div>
+                <i class="fas fa-headphones-alt"></i>
+            </div>
+            <div class="music-section-label">歌单</div>
+            <div id="music-playlists" class="music-playlists"></div>
+            <div class="music-section-label">曲目</div>
+            <div id="music-track-list" class="music-track-list"></div>
+            <div id="music-empty-tip" class="music-empty-tip is-hidden">当前歌单暂无可播放音乐</div>
+            <div class="music-now-playing">
+                <div class="music-meta-label">当前歌单</div>
+                <div id="music-current-playlist" class="music-meta-value">未选择歌单</div>
+                <div class="music-meta-label" style="margin-top:10px;">当前播放</div>
+                <div id="music-current-track" class="music-meta-value">未选择音乐</div>
+            </div>
+            <div class="music-progress-group">
+                <div class="music-time-row">
+                    <span id="music-current-time">00:00</span>
+                    <span id="music-duration">00:00</span>
+                </div>
+                <input type="range" id="music-progress" class="modern-slider" min="0" max="0" value="0" step="1">
+            </div>
+            <div class="music-volume-group">
+                <div class="music-volume-row">
+                    <span>音量</span>
+                    <span><i class="fas fa-volume-up"></i></span>
+                </div>
+                <input type="range" id="music-volume" class="modern-slider" min="0" max="1" value="1" step="0.01">
+            </div>
+            <div class="music-control-row">
+                <button id="music-play-btn" class="music-control-btn"><i class="fas fa-play"></i><span>播放</span></button>
+                <button id="music-next-btn" class="music-control-btn"><i class="fas fa-forward"></i><span>下一首</span></button>
+                <button id="music-mode-btn" class="music-control-btn"><i class="fas fa-random"></i><span class="mode-label">顺序播放</span></button>
+            </div>
+        </div>
         <div id="settings-menu" class="settings-popover">
             <div class="settings-section">
                 <label>主题切换</label>
@@ -3329,6 +4229,23 @@
                     <button data-theme="glass" class="theme-btn" title="毛玻璃">
                         <i class="fas fa-layer-group"></i>
                     </button>
+                </div>
+                <div class="background-color-section">
+                    <label>舞台背景颜色</label>
+                    <div class="background-color-buttons">
+                        <button class="background-color-btn" data-bg-key="aurora">
+                            <span class="background-color-swatch" style="--swatch-color: #101828;"></span>
+                            <span class="background-color-label">暮蓝·靛青</span>
+                        </button>
+                        <button class="background-color-btn" data-bg-key="velvet">
+                            <span class="background-color-swatch" style="--swatch-color: #2b0f3a;"></span>
+                            <span class="background-color-label">绛紫·暮霞</span>
+                        </button>
+                        <button class="background-color-btn" data-bg-key="linen">
+                            <span class="background-color-swatch" style="--swatch-color: #f4ecd8;"></span>
+                            <span class="background-color-label">奶油·暖沙</span>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="settings-section visual-effects-section">
@@ -3397,14 +4314,14 @@
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-name">
-                                <i class="fas fa-volume-up"></i>
-                                背景音乐
+                                <i class="fas fa-compact-disc"></i>
+                                音乐盒 开启/关闭
                             </div>
-                            <div class="setting-description">控制游戏背景音乐的播放</div>
+                            <div class="setting-description">开启后显示音乐按钮，并可打开歌单播放器</div>
                         </div>
                         <div class="setting-control">
                             <label class="modern-toggle">
-                                <input type="checkbox" id="bgm-toggle" checked="checked">
+                                <input type="checkbox" id="musicbox-toggle" checked="checked">
                                 <div class="toggle-track">
                                     <div class="toggle-thumb">
                                         <i class="toggle-icon fas fa-check"></i>
@@ -3510,7 +4427,3 @@
         </div>
     </div>
 </body>
-
-
-
-    
