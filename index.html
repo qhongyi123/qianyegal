@@ -3,8 +3,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="color-scheme" content="dark light">
-    <title>视觉小说界面</title>
-    <meta name="description" content="视觉小说界面">
+    <title>千夜柑橘 · 视觉小说舞台</title>
+    <meta name="description" content="千夜柑橘视觉小说舞台体验">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" integrity="sha512-5VSZ94c6qdN934V3CyMfCVxYvBy06SnVAk0nnBYnCTsRmRykGGBqBPdZiZsa1+lZeXqIu58V38eRcVbk5C29Eg==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-EQg6Z9erjRzCQXDpUe1koXSPoaqeEniT730cdpShUMHbOWcZH/5LiCFYI8a9kaI0s5momkGLumZ5qX6LzN04hA==" crossorigin="anonymous"></script>
@@ -3191,6 +3191,138 @@
         }
         /* === 视觉小说部分结束 === */
 
+        /* === 横屏适配（手机横屏模式）=== */
+        @media (max-height: 560px) and (orientation: landscape) {
+            #content-area {
+                align-items: flex-start;
+                padding: 4px;
+            }
+
+            #view-novel {
+                max-height: calc(100vh - 60px);
+                border-radius: 16px;
+                width: min(100vw, calc((100vh - 60px) * 16 / 9));
+            }
+
+            .character-layer {
+                bottom: 54px;
+                top: 4px;
+                left: 4px;
+                right: 4px;
+            }
+
+            .cg-layer {
+                bottom: 74px;
+                top: 8px;
+                left: 8px;
+                right: 8px;
+            }
+
+            .dialogue-box {
+                bottom: 4px;
+                width: calc(100% - 16px);
+                padding: 6px 12px;
+                border-radius: 12px;
+                max-width: none;
+            }
+
+            .character-name {
+                display: inline;
+                font-size: 13px;
+                margin-bottom: 0;
+                margin-right: 8px;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+
+            .character-name:not(:empty)::after {
+                content: ':';
+                margin-left: 2px;
+            }
+
+            .dialogue-text {
+                display: inline;
+                font-size: 13px;
+                line-height: 1.5;
+                margin-bottom: 0;
+                max-height: 1.5em;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: calc(100% - 80px);
+                vertical-align: baseline;
+            }
+
+            .dialogue-bottom-controls {
+                position: absolute;
+                top: 4px;
+                right: 8px;
+                margin-top: 0;
+                gap: 6px;
+            }
+
+            .dialogue-controls {
+                gap: 4px;
+            }
+
+            .control-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .control-btn i {
+                font-size: 14px;
+            }
+
+            .player-choice-input {
+                flex: 0;
+            }
+
+            .player-choice-input .choice-input-controls {
+                padding: 4px 8px;
+            }
+
+            .player-choice-input .choice-input-controls #choice-text-input {
+                font-size: 12px;
+                padding: 4px 6px;
+            }
+
+            .dialogue-choices {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .dialogue-choice-item {
+                flex: 1 1 auto;
+                min-width: 120px;
+            }
+
+            .dialogue-choice-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .top-header-container {
+                top: 4px;
+                right: 4px;
+            }
+
+            .nav-btn {
+                width: 36px;
+                height: 36px;
+            }
+
+            .nav-icon {
+                width: 24px;
+                height: 24px;
+            }
+
+            .nav-icon i {
+                font-size: 14px;
+            }
+        }
+
         /* === 设置菜单相关UI部分 === */
         .top-header-container {
             display: flex;
@@ -4427,3 +4559,8 @@
         </div>
     </div>
 </body>
+
+
+
+
+
